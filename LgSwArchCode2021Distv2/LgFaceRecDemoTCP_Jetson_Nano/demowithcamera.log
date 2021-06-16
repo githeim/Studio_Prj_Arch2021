@@ -1,0 +1,183 @@
+initialization of embedding network!
+face embedding for one face:   -0.140626   0.0921241   0.0935675  -0.0869477  -0.0997999   -0.130945 -0.00612567    -0.18731   0.0620417   -0.101128    0.278433   -0.125362   -0.258728  -0.0623318  -0.0716168    0.232445   -0.160555    -0.13605   -0.101612  -0.0428601   0.0664214 -0.00978273  -0.0278341   0.0899527  -0.0933356   -0.270899  -0.0678486   -0.057275 -0.00624235  -0.0037165    0.021106    0.109299   -0.166661  0.00832123   0.0331379   0.0628693  -0.0059475   -0.114603    0.149291  -0.0695569   -0.241095  -0.0812402   0.0876741    0.192294    0.186321  -0.0663327   0.0392168   -0.111472    0.064155   -0.200314  -0.0932927    0.128258   0.0636381   0.0373588   0.0295932   -0.150906   0.0619218    0.117744   -0.188502  -0.0617596   0.0675514   -0.158171  -0.0567439   -0.108914    0.242346   0.0856425   -0.148688   -0.101944    0.260313   -0.135329   -0.032011   0.0129596   -0.130467   -0.155854   -0.273893  -0.0238336    0.365618   0.0989234   -0.204582   0.0873319  -0.0758559   0.0377572   0.0712869   0.0965714  -0.0360274  0.00581882   -0.116979  -0.0144132     0.18282  -0.0889597   0.0673878    0.233594  -0.0118801  -0.0522871   0.0659673  0.00278379  -0.0903414 -0.00258353   -0.100395   0.0301125  0.00103046   -0.117739   0.0165661    0.098788   -0.121674   0.0808217  0.00667188   0.0228713  -0.0132963  -0.0185805  -0.0418869   -0.104573    0.111058    -0.17081    0.163693    0.132285  0.00577355    0.125505   0.0814417    0.141806  -0.0435575  -0.0452193   -0.128677  -0.0472144    0.105792  -0.0766071    0.030502  0.00280864 
+
+try to deserialize SVMs:
+svm/classifier_0_1.dat
+svm/classifier_0_2.dat
+svm/classifier_0_3.dat
+svm/classifier_0_4.dat
+svm/classifier_0_5.dat
+svm/classifier_0_6.dat
+svm/classifier_0_7.dat
+svm/classifier_0_8.dat
+svm/classifier_0_9.dat
+svm/classifier_0_10.dat
+svm/classifier_0_11.dat
+svm/classifier_0_12.dat
+svm/classifier_1_2.dat
+svm/classifier_1_3.dat
+svm/classifier_1_4.dat
+svm/classifier_1_5.dat
+svm/classifier_1_6.dat
+svm/classifier_1_7.dat
+svm/classifier_1_8.dat
+svm/classifier_1_9.dat
+svm/classifier_1_10.dat
+svm/classifier_1_11.dat
+svm/classifier_1_12.dat
+svm/classifier_2_3.dat
+svm/classifier_2_4.dat
+svm/classifier_2_5.dat
+svm/classifier_2_6.dat
+svm/classifier_2_7.dat
+svm/classifier_2_8.dat
+svm/classifier_2_9.dat
+svm/classifier_2_10.dat
+svm/classifier_2_11.dat
+svm/classifier_2_12.dat
+svm/classifier_3_4.dat
+svm/classifier_3_5.dat
+svm/classifier_3_6.dat
+svm/classifier_3_7.dat
+svm/classifier_3_8.dat
+svm/classifier_3_9.dat
+svm/classifier_3_10.dat
+svm/classifier_3_11.dat
+svm/classifier_3_12.dat
+svm/classifier_4_5.dat
+svm/classifier_4_6.dat
+svm/classifier_4_7.dat
+svm/classifier_4_8.dat
+svm/classifier_4_9.dat
+svm/classifier_4_10.dat
+svm/classifier_4_11.dat
+svm/classifier_4_12.dat
+svm/classifier_5_6.dat
+svm/classifier_5_7.dat
+svm/classifier_5_8.dat
+svm/classifier_5_9.dat
+svm/classifier_5_10.dat
+svm/classifier_5_11.dat
+svm/classifier_5_12.dat
+svm/classifier_6_7.dat
+svm/classifier_6_8.dat
+svm/classifier_6_9.dat
+svm/classifier_6_10.dat
+svm/classifier_6_11.dat
+svm/classifier_6_12.dat
+svm/classifier_7_8.dat
+svm/classifier_7_9.dat
+svm/classifier_7_10.dat
+svm/classifier_7_11.dat
+svm/classifier_7_12.dat
+svm/classifier_8_9.dat
+svm/classifier_8_10.dat
+svm/classifier_8_11.dat
+svm/classifier_8_12.dat
+svm/classifier_9_10.dat
+svm/classifier_9_11.dat
+svm/classifier_9_12.dat
+svm/classifier_10_11.dat
+svm/classifier_10_12.dat
+svm/classifier_11_12.dat
+face embedding for one face:   -0.140626   0.0921241   0.0935675  -0.0869477  -0.0997999   -0.130945 -0.00612567    -0.18731   0.0620417   -0.101128    0.278433   -0.125362   -0.258728  -0.0623318  -0.0716168    0.232445   -0.160555    -0.13605   -0.101612  -0.0428601   0.0664214 -0.00978273  -0.0278341   0.0899527  -0.0933356   -0.270899  -0.0678486   -0.057275 -0.00624235  -0.0037165    0.021106    0.109299   -0.166661  0.00832123   0.0331379   0.0628693  -0.0059475   -0.114603    0.149291  -0.0695569   -0.241095  -0.0812402   0.0876741    0.192294    0.186321  -0.0663327   0.0392168   -0.111472    0.064155   -0.200314  -0.0932927    0.128258   0.0636381   0.0373588   0.0295932   -0.150906   0.0619218    0.117744   -0.188502  -0.0617596   0.0675514   -0.158171  -0.0567439   -0.108914    0.242346   0.0856425   -0.148688   -0.101944    0.260313   -0.135329   -0.032011   0.0129596   -0.130467   -0.155854   -0.273893  -0.0238336    0.365618   0.0989234   -0.204582   0.0873319  -0.0758559   0.0377572   0.0712869   0.0965714  -0.0360274  0.00581882   -0.116979  -0.0144132     0.18282  -0.0889597   0.0673878    0.233594  -0.0118801  -0.0522871   0.0659673  0.00278379  -0.0903414 -0.00258353   -0.100395   0.0301125  0.00103046   -0.117739   0.0165661    0.098788   -0.121674   0.0808217  0.00667188   0.0228713  -0.0132963  -0.0185805  -0.0418869   -0.104573    0.111058    -0.17081    0.163693    0.132285  0.00577355    0.125505   0.0814417    0.141806  -0.0435575  -0.0452193   -0.128677  -0.0472144    0.105792  -0.0766071    0.030502  0.00280864 
+
+class: 0:	mean: inf	votes: 2
+		summ: inf
+class: 1:	mean: inf	votes: 0
+		summ: 0.000000
+class: 2:	mean: inf	votes: 6
+		summ: inf
+class: 3:	mean: inf	votes: 8
+		summ: inf
+class: 4:	mean: inf	votes: 4
+		summ: inf
+class: 5:	mean: inf	votes: 1
+		summ: inf
+class: 6:	mean: inf	votes: 3
+		summ: inf
+class: 7:	mean: inf	votes: 11
+		summ: inf
+class: 8:	mean: inf	votes: 10
+		summ: inf
+class: 9:	mean: inf	votes: 7
+		summ: inf
+class: 10:	mean: inf	votes: 9
+		summ: inf
+class: 11:	mean: inf	votes: 12
+		summ: inf
+class: 12:	mean: inf	votes: 5
+		summ: inf
+label: 2.000000
+
+selftest classifier - label of test image is: 2 - Chandler
+video
+[gstreamer] initialized gstreamer, version 1.14.5.0
+[gstreamer] gstCamera -- attempting to create device csi://0
+[gstreamer] gstCamera pipeline string:
+[gstreamer] nvarguscamerasrc sensor-id=0 ! video/x-raw(memory:NVMM), width=(int)1280, height=(int)720, framerate=30/1, format=(string)NV12 ! nvvidconv flip-method=2 ! video/x-raw ! appsink name=mysink
+[gstreamer] gstCamera successfully created device csi://0
+
+successfully initialized camera device
+    width:  1280
+   height:  720
+[gstreamer] opening gstCamera for streaming, transitioning pipeline to GST_STATE_PLAYING
+[gstreamer] gstreamer changed state from NULL to READY ==> mysink
+[gstreamer] gstreamer changed state from NULL to READY ==> capsfilter1
+[gstreamer] gstreamer changed state from NULL to READY ==> nvvconv0
+[gstreamer] gstreamer changed state from NULL to READY ==> capsfilter0
+[gstreamer] gstreamer changed state from NULL to READY ==> nvarguscamerasrc0
+[gstreamer] gstreamer changed state from NULL to READY ==> pipeline0
+[gstreamer] gstreamer changed state from READY to PAUSED ==> capsfilter1
+[gstreamer] gstreamer changed state from READY to PAUSED ==> nvvconv0
+[gstreamer] gstreamer changed state from READY to PAUSED ==> capsfilter0
+[gstreamer] gstreamer stream status CREATE ==> src
+[gstreamer] gstreamer changed state from READY to PAUSED ==> nvarguscamerasrc0
+[gstreamer] gstreamer changed state from READY to PAUSED ==> pipeline0
+[gstreamer] gstreamer message new-clock ==> pipeline0
+[gstreamer] gstreamer stream status ENTER ==> src
+[gstreamer] gstreamer changed state from PAUSED to PLAYING ==> capsfilter1
+[gstreamer] gstreamer changed state from PAUSED to PLAYING ==> nvvconv0
+[gstreamer] gstreamer changed state from PAUSED to PLAYING ==> capsfilter0
+[gstreamer] gstreamer changed state from PAUSED to PLAYING ==> nvarguscamerasrc0
+[gstreamer] gstreamer message stream-start ==> pipeline0
+[0;33m[gstreamer] gstCamera -- end of stream (EOS)
+[0m[gstreamer] gstreamer changed state from READY to PAUSED ==> mysink
+[gstreamer] gstreamer message async-done ==> pipeline0
+[gstreamer] gstreamer changed state from PAUSED to PLAYING ==> mysink
+[gstreamer] gstreamer changed state from PAUSED to PLAYING ==> pipeline0
+[gstreamer] gstreamer pipeline0 recieved EOS signal...
+camera open for streaming
+Start generating TenosrRT runtime models
+generate P-net
+try to deserialize engine: engines/pnet_engine_0_217_384.engine
+try to deserialize engine: engines/pnet_engine_1_154_273.engine
+try to deserialize engine: engines/pnet_engine_2_109_194.engine
+try to deserialize engine: engines/pnet_engine_3_77_137.engine
+try to deserialize engine: engines/pnet_engine_4_55_98.engine
+try to deserialize engine: engines/pnet_engine_5_39_69.engine
+try to deserialize engine: engines/pnet_engine_6_28_49.engine
+engine does not exist!
+build cuda engine for src/models/det1_relu.caffemodel
+serialize engine: engines/pnet_engine_6_28_49.engine
+try to deserialize engine: engines/pnet_engine_7_20_35.engine
+engine does not exist!
+build cuda engine for src/models/det1_relu.caffemodel
+serialize engine: engines/pnet_engine_7_20_35.engine
+try to deserialize engine: engines/pnet_engine_8_14_25.engine
+engine does not exist!
+build cuda engine for src/models/det1_relu.caffemodel
+serialize engine: engines/pnet_engine_8_14_25.engine
+generate R-net
+try to deserialize engine: engines/rnet_engine_24_24.engine
+engine does not exist!
+build cuda engine for src/models/det2_relu.caffemodel
+serialize engine: engines/rnet_engine_24_24.engine
+generate O-net
+try to deserialize engine: engines/onet_engine_48_48.engine
+engine does not exist!
+build cuda engine for src/models/det3_relu.caffemodel
+serialize engine: engines/onet_engine_48_48.engine
+End generating TensorRT runtime models
+Input shape 720*1280
+Min size 40

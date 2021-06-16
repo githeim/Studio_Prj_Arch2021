@@ -1,0 +1,119 @@
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_11dfb/fast"
+/usr/bin/make -f CMakeFiles/cmTC_11dfb.dir/build.make CMakeFiles/cmTC_11dfb.dir/build
+make[1]: Entering directory '/home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_11dfb.dir/CheckSymbolExists.c.o
+/usr/bin/cc    -o CMakeFiles/cmTC_11dfb.dir/CheckSymbolExists.c.o   -c /home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_11dfb
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_11dfb.dir/link.txt --verbose=1
+/usr/bin/cc      -rdynamic CMakeFiles/cmTC_11dfb.dir/CheckSymbolExists.c.o  -o cmTC_11dfb 
+CMakeFiles/cmTC_11dfb.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x14): undefined reference to `pthread_create'
+CheckSymbolExists.c:(.text+0x18): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_11dfb.dir/build.make:97: recipe for target 'cmTC_11dfb' failed
+make[1]: *** [cmTC_11dfb] Error 1
+make[1]: Leaving directory '/home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_11dfb/fast' failed
+make: *** [cmTC_11dfb/fast] Error 2
+
+File /home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_be509/fast"
+/usr/bin/make -f CMakeFiles/cmTC_be509.dir/build.make CMakeFiles/cmTC_be509.dir/build
+make[1]: Entering directory '/home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_be509.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_be509.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_be509
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_be509.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_be509.dir/CheckFunctionExists.c.o  -o cmTC_be509 -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_be509.dir/build.make:97: recipe for target 'cmTC_be509' failed
+make[1]: *** [cmTC_be509] Error 1
+make[1]: Leaving directory '/home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_be509/fast' failed
+make: *** [cmTC_be509/fast] Error 2
+
+
+Determining if the function cblas_ddot exists failed with the following output:
+Change Dir: /home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_bef09/fast"
+/usr/bin/make -f CMakeFiles/cmTC_bef09.dir/build.make CMakeFiles/cmTC_bef09.dir/build
+make[1]: Entering directory '/home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_bef09.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=cblas_ddot   -o CMakeFiles/cmTC_bef09.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_bef09
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bef09.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=cblas_ddot    -rdynamic CMakeFiles/cmTC_bef09.dir/CheckFunctionExists.c.o  -o cmTC_bef09 
+CMakeFiles/cmTC_bef09.dir/CheckFunctionExists.c.o: In function `main':
+CheckFunctionExists.c:(.text+0x10): undefined reference to `cblas_ddot'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_bef09.dir/build.make:97: recipe for target 'cmTC_bef09' failed
+make[1]: *** [cmTC_bef09] Error 1
+make[1]: Leaving directory '/home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_bef09/fast' failed
+make: *** [cmTC_bef09/fast] Error 2
+
+
+Determining if the function sgesv exists failed with the following output:
+Change Dir: /home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_452f5/fast"
+/usr/bin/make -f CMakeFiles/cmTC_452f5.dir/build.make CMakeFiles/cmTC_452f5.dir/build
+make[1]: Entering directory '/home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_452f5.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=sgesv   -o CMakeFiles/cmTC_452f5.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_452f5
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_452f5.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=sgesv    -rdynamic CMakeFiles/cmTC_452f5.dir/CheckFunctionExists.c.o  -o cmTC_452f5 
+CMakeFiles/cmTC_452f5.dir/CheckFunctionExists.c.o: In function `main':
+CheckFunctionExists.c:(.text+0x10): undefined reference to `sgesv'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_452f5.dir/build.make:97: recipe for target 'cmTC_452f5' failed
+make[1]: *** [cmTC_452f5] Error 1
+make[1]: Leaving directory '/home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_452f5/fast' failed
+make: *** [cmTC_452f5/fast] Error 2
+
+
+Determining if the function sgesv_ exists failed with the following output:
+Change Dir: /home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_d362d/fast"
+/usr/bin/make -f CMakeFiles/cmTC_d362d.dir/build.make CMakeFiles/cmTC_d362d.dir/build
+make[1]: Entering directory '/home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d362d.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=sgesv_   -o CMakeFiles/cmTC_d362d.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_d362d
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d362d.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=sgesv_    -rdynamic CMakeFiles/cmTC_d362d.dir/CheckFunctionExists.c.o  -o cmTC_d362d 
+CMakeFiles/cmTC_d362d.dir/CheckFunctionExists.c.o: In function `main':
+CheckFunctionExists.c:(.text+0x10): undefined reference to `sgesv_'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_d362d.dir/build.make:97: recipe for target 'cmTC_d362d' failed
+make[1]: *** [cmTC_d362d] Error 1
+make[1]: Leaving directory '/home/lg/dlib-19.22/dlib/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_d362d/fast' failed
+make: *** [cmTC_d362d/fast] Error 2
+
+

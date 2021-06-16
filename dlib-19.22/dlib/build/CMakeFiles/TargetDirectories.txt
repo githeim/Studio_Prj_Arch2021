@@ -1,0 +1,9 @@
+/home/lg/dlib-19.22/dlib/build/CMakeFiles/install/strip.dir
+/home/lg/dlib-19.22/dlib/build/CMakeFiles/install/local.dir
+/home/lg/dlib-19.22/dlib/build/CMakeFiles/install.dir
+/home/lg/dlib-19.22/dlib/build/CMakeFiles/package.dir
+/home/lg/dlib-19.22/dlib/build/CMakeFiles/package_source.dir
+/home/lg/dlib-19.22/dlib/build/CMakeFiles/dlib.dir
+/home/lg/dlib-19.22/dlib/build/CMakeFiles/rebuild_cache.dir
+/home/lg/dlib-19.22/dlib/build/CMakeFiles/edit_cache.dir
+/home/lg/dlib-19.22/dlib/build/CMakeFiles/list_install_components.dir

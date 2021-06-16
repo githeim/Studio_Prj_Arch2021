@@ -1,0 +1,3 @@
+/home/lg/dlib-19.22/dlib/build/cudnn_test_build/CMakeFiles/rebuild_cache.dir
+/home/lg/dlib-19.22/dlib/build/cudnn_test_build/CMakeFiles/cudnn_test.dir
+/home/lg/dlib-19.22/dlib/build/cudnn_test_build/CMakeFiles/edit_cache.dir
