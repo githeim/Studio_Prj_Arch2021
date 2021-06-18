@@ -22,8 +22,21 @@
 #include "NetworkTCP.h"
 #include "TcpSendRecvJpeg.h"
 
-//#define EXCLUDE_RECOGNIZE_FACE true
+#define SPLIT_IMAGE_HANDLER
 
+#ifdef SPLIT_IMAGE_HANDLER
+#include "ImageHandler.h"
+#endif // SPLIT_IMAGE_HANDLER
+
+#define SPLIT_FACE_DECTOR
+#ifdef SPLIT_FACE_DECTOR
+#include "FaceDetector.h"
+#endif // SPLIT_FACE_DECTOR
+
+//#define EXCLUDE_RECOGNIZE_FACE true
+#define MAX_THREAD_NUM  2
+
+#ifndef SPLIT_IMAGE_HANDLER
 // create high performace jetson camera - loads the image directly to gpu memory or shared memory
 gstCamera* getCamera(){
     gstCamera* camera = gstCamera::Create(gstCamera::DefaultWidth, gstCamera::DefaultHeight, NULL);
@@ -42,27 +55,35 @@ gstCamera* getCamera(){
     }
     return camera;
 }
-
+#endif // SPLIT_IMAGE_HANDLER
 
 // perform face recognition with Raspberry Pi camera
+#ifdef MAX_THREAD_NUM
+int camera_face_recognition(int id, int argc, char *argv[])
+#else // MAX_THREAD_NUM
 int camera_face_recognition(int argc, char *argv[])
+#endif // MAX_THREAD_NUM
   {
    TTcpListenPort    *TcpListenPort;
    TTcpConnectedPort *TcpConnectedPort;
    struct sockaddr_in cli_addr;
    socklen_t          clilen;
    short              listen_port;
+#ifndef SPLIT_IMAGE_HANDLER
    bool               usecamera=false;
+#endif // SPLIT_IMAGE_HANDLER
 
-    
     // -------------- Initialization -------------------
-    
+#ifndef SPLIT_FACE_DECTOR
     face_embedder embedder;                         // deserialize recognition network 
     face_classifier classifier(&embedder);          // train OR deserialize classification SVM's 
     if(classifier.need_restart() == 1) return 1;    // small workaround - if svms were trained theres some kind of memory problem when generate mtcnn
+#endif // SPLIT_FACE_DECTOR
 
+#ifndef SPLIT_IMAGE_HANDLER
     gstCamera* camera=NULL;
     videoSource* inputStream=NULL;
+#endif // SPLIT_IMAGE_HANDLER
     bool user_quit = false;
     int imgWidth ;
     int imgHeight ;
@@ -73,8 +94,12 @@ int camera_face_recognition(int argc, char *argv[])
        exit(0);
     }
 
-    listen_port =atoi(argv[1]);
- 
+    listen_port =atoi(argv[1]) + id;
+
+#ifdef SPLIT_IMAGE_HANDLER
+    imgWidth = ImageHandler::GetInstance()->GetImageWidth();
+    imgHeight = ImageHandler::GetInstance()->GetImageHeight();
+#else
     if (argc==2) usecamera=true;
 
     if (usecamera)
@@ -105,7 +130,8 @@ int camera_face_recognition(int argc, char *argv[])
         imgHeight = inputStream->GetHeight();
 
        }
-    
+#endif // SPLIT_IMAGE_HANDLER
+
      mtcnn finder(imgHeight, imgWidth);              // build OR deserialize TensorRT detection network
 
     // malloc shared memory for images for access with cpu and gpu without copying data
@@ -131,11 +157,14 @@ int camera_face_recognition(int argc, char *argv[])
     int num_dets = 0;
     std::vector<std::string> label_encodings;       // vector for the real names of the classes/persons
 
+#ifdef SPLIT_FACE_DECTOR
+    FaceDetector::GetInstance()->GetLabelEncoding(&label_encodings);
+#else
     // get the possible class names
     classifier.get_label_encoding(&label_encodings);
-    
-    
-    
+#endif // SPLIT_FACE_DECTOR
+
+    printf("listen port:%d\n", listen_port);
 
    if  ((TcpListenPort=OpenTcpListenPort(listen_port))==NULL)  // Open TCP Network port
      {
@@ -162,6 +191,14 @@ int camera_face_recognition(int argc, char *argv[])
         clk = clock();              // fps clock
 	float* imgOrigin = NULL;    // camera image  
         // the 2nd arg 1000 defines timeout, true is for the "zeroCopy" param what means the image will be stored to shared memory    
+#ifdef SPLIT_IMAGE_HANDLER
+    imgOrigin = ImageHandler::GetInstance()->GetImageData();
+        if (imgOrigin == NULL)
+        {
+           printf("origin capture image is null\n");
+           continue;
+        }
+#else
 #if 1    
         if (usecamera)
          {
@@ -174,6 +211,11 @@ int camera_face_recognition(int argc, char *argv[])
           if( !inputStream->Capture((float4**)&imgOrigin, 1000) ) continue;
 
          }
+         if (imgOrigin == NULL)
+         {
+			printf("origin capture image is null\n");
+            continue;
+         }
 #else
         float* imgCUDA=NULL;    //  image  
 
@@ -181,6 +223,8 @@ int camera_face_recognition(int argc, char *argv[])
         printf("failed to load image\n");
 
 #endif        
+#endif // SPLIT_IMAGE_HANDLER
+
 	point1 = clock();              // fps clock
 
         //since the captured image is located at shared memory, we also can access it from cpu 
@@ -214,16 +258,28 @@ int camera_face_recognition(int argc, char *argv[])
             
             // generate face embeddings from the cropped faces and store them in a vector
             std::vector<matrix<float,0,1>> face_embeddings;
-            embedder.embeddings(&faces, &face_embeddings);                        
-           
+#ifdef SPLIT_FACE_DECTOR
+            FaceDetector::GetInstance()->Embeddings(&faces, &face_embeddings);
+#else
+            embedder.embeddings(&faces, &face_embeddings);
+#endif // SPLIT_FACE_DECTOR
+
 	point3 = clock();              // fps clock
 
             // feed the embeddings to the pretrained SVM's. Store the predicted labels in a vector
             std::vector<double> face_labels;
-            classifier.prediction(&face_embeddings, &face_labels);                 
+#ifdef SPLIT_FACE_DECTOR
+            FaceDetector::GetInstance()->Prediction(&face_embeddings, &face_labels);
+#else
+            classifier.prediction(&face_embeddings, &face_labels);
+#endif // SPLIT_FACE_DECTOR
 
             // draw bounding boxes and labels to the original image 
             draw_detections(origin_cpu, &rects, &face_labels, &label_encodings);    
+        }
+        else
+        {
+            point3 = clock();              // fps clock
         }
 #endif//  EXCLUDE_RECOGNIZE_FACE
             char str[256];
@@ -242,11 +298,18 @@ int camera_face_recognition(int argc, char *argv[])
         //fps = (0.90 * fps) + (0.1 * (1 / ((double)(clock()-clk)/CLOCKS_PER_SEC)));      
 	printf("======== fps:%.1lf capture:%ldms findFace:%ldms detect2:%ldms prediction:%ldms send:%ldms =======\n",
 			fps, (1000)*(point1-clk)/CLOCKS_PER_SEC, (1000)*(point2-point1)/CLOCKS_PER_SEC, (1000)*(point3-point2)/CLOCKS_PER_SEC, (1000)*(point4-point3)/CLOCKS_PER_SEC, (1000)*(now-point4)/CLOCKS_PER_SEC);
+#ifdef SPLIT_IMAGE_HANDLER
+    if (ImageHandler::GetInstance()->IsNotStreaming())
+        break;
+#else
         if ((inputStream) && (!inputStream->IsStreaming())) break;
-    }   
+#endif // SPLIT_IMAGE_HANDLER
+    }
 
+#ifndef SPLIT_IMAGE_HANDLER
     SAFE_DELETE(camera);
     SAFE_DELETE(inputStream);
+#endif // SPLIT_IMAGE_HANDLER
     CHECK(cudaFreeHost(rgb_cpu));
     CHECK(cudaFreeHost(cropped_buffer_cpu[0]));
     CHECK(cudaFreeHost(cropped_buffer_cpu[1]));
@@ -391,8 +454,32 @@ int main(int argc, char *argv[])
 
     int state = 0;
 
+#ifdef SPLIT_IMAGE_HANDLER
+    ImageHandler::GetInstance()->Initialize(argc, argv);
+#endif // SPLIT_IMAGE_HANDLER
+
+#ifdef SPLIT_FACE_DECTOR
+    FaceDetector::GetInstance();
+#endif // SPLIT_FACE_DECTOR
+
+#ifdef MAX_THREAD_NUM
+    std::thread    runner[MAX_THREAD_NUM];
+
+    for (size_t i = 0; i < MAX_THREAD_NUM; ++i)
+    {
+        runner[i] = std::thread(camera_face_recognition, i, argc, argv);
+        usleep(1000000);
+    }
+
+    for (size_t i = 0; i < MAX_THREAD_NUM; ++i)
+    {
+        runner[i].join();
+    }
+#else
+
     state = camera_face_recognition( argc, argv );
-    
+#endif // MAX_THREAD_NUM
+
     //else state = test_prediction_images(); //test prediction at a set of test images
     
    
