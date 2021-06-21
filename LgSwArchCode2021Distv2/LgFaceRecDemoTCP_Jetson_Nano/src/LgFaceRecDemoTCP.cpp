@@ -30,9 +30,6 @@
 #include "FaceDetector.h"
 #endif // SPLIT_FACE_DECTOR
 
-//#define EXCLUDE_RECOGNIZE_FACE true
-//#define MAX_THREAD_NUM  2
-
 #define TEST_INSTRUMENT
 
 #include <chrono>
@@ -153,16 +150,17 @@ int camera_face_recognition(int argc, char *argv[])
            continue;
         }
 
+        printf("capture image\n");
+
 #ifdef TEST_INSTRUMENT
         auto startImgXcoding= std::chrono::system_clock::now();
 #endif
 
         //since the captured image is located at shared memory, we also can access it from cpu
         // here I define a cv::Mat for it to draw onto the image from CPU without copying data -- TODO: draw from CUDA
-//        cudaRGBA32ToBGRA32(  (float4*)imgOrigin,  (float4*)imgOrigin, imgWidth, imgHeight); //ADDED DP
+        cudaRGBA32ToBGRA32(  (float4*)imgOrigin,  (float4*)imgOrigin, imgWidth, imgHeight); //ADDED DP
         cv::Mat origin_cpu(imgHeight, imgWidth, CV_32FC4, imgOrigin);
 
-#ifndef EXCLUDE_RECOGNIZE_FACE
         // the mtcnn pipeline is based on GpuMat 8bit values 3 channels while the captured image is RGBA32
         // i use a kernel from jetson-inference to remove the A-channel and float to uint8
         cudaRGBA32ToRGB8( (float4*)imgOrigin, (uchar3*)rgb_gpu, imgWidth, imgHeight );
@@ -239,7 +237,6 @@ int camera_face_recognition(int argc, char *argv[])
             // draw bounding boxes and labels to the original image
             draw_detections(origin_cpu, &rects, &face_labels, &label_encodings);
         }
-#endif//  EXCLUDE_RECOGNIZE_FACE
             char str[256];
             sprintf(str, "TensorRT  %.1lf FPS", fps);               // print the FPS to the bar
 
@@ -261,8 +258,8 @@ int camera_face_recognition(int argc, char *argv[])
 	now = clock();
         fps = (0.90 * fps) + (0.1 * (1 / ((double)(now-clk)/CLOCKS_PER_SEC)));
         //fps = (0.90 * fps) + (0.1 * (1 / ((double)(clock()-clk)/CLOCKS_PER_SEC)));
-	printf("======== fps:%.1lf  =======\n",
-			fps);
+	printf("======== fps:%.1lf  time:%lu ms =======\n",
+			fps, 1000*(now-clk)/CLOCKS_PER_SEC);
     if (ImageHandler::GetInstance()->IsNotStreaming())
         break;
 #ifdef TEST_INSTRUMENT
