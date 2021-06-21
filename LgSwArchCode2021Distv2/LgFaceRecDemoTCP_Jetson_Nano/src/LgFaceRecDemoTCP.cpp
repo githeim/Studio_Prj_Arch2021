@@ -158,7 +158,7 @@ int camera_face_recognition(int argc, char *argv[])
 
         //since the captured image is located at shared memory, we also can access it from cpu
         // here I define a cv::Mat for it to draw onto the image from CPU without copying data -- TODO: draw from CUDA
-        cudaRGBA32ToBGRA32(  (float4*)imgOrigin,  (float4*)imgOrigin, imgWidth, imgHeight); //ADDED DP
+//        cudaRGBA32ToBGRA32(  (float4*)imgOrigin,  (float4*)imgOrigin, imgWidth, imgHeight); //ADDED DP
         cv::Mat origin_cpu(imgHeight, imgWidth, CV_32FC4, imgOrigin);
 
         // the mtcnn pipeline is based on GpuMat 8bit values 3 channels while the captured image is RGBA32
