@@ -64,26 +64,34 @@ void NetworkInterface::Stop()
 }
 
 void NetworkInterface::Hwnd_Transmit(    ) {
-
+    int sent_size;
+    clock_t begin;
+    clock_t end;
     usleep(50000);
     while (g_bTranmitRunFlag) {
+        cv::Mat data;
 
         printf("\033[1;36m[%s][%d] :x: size = [%lu] \033[m\n",__FUNCTION__,__LINE__,g_listTransmit.size());
 
-        if (g_listTransmit.size() == 0 )
         {
-            usleep(30000);
-            continue;
+            std::unique_lock<std::mutex> lck(g_mtxTransmit);
+
+            if (g_listTransmit.size() == 0 )
+            {
+                g_CondVar.wait(lck);
+                continue;
+            }
+            data = g_listTransmit.front();
+            g_listTransmit.pop_front();
         }
-        g_mtxTransmit.lock();
-        cv::Mat data = g_listTransmit.front();
-        g_listTransmit.pop_front();
-        g_mtxTransmit.unlock();
-        if (TcpSendImageAsJpeg(TcpConnectedPort,data) < 0)  {
+
+        begin = clock();
+        if ((sent_size = TcpSendImageAsJpeg(TcpConnectedPort,data)) < 0)  {
             printf("\033[1;31m[%s][%d] :x: Err \033[m\n",__FUNCTION__,__LINE__);
-            continue;
         }
-        usleep(1);
+        end = clock();
+
+        printf("sending time:%lu ms sent size:%d\n", 1000*(end-begin)/CLOCKS_PER_SEC, sent_size);
     }
     CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
     CloseTcpListenPort(&TcpListenPort);  // Close listen port
@@ -98,6 +106,7 @@ void NetworkInterface::PushDataToSend(cv::Mat &data) {
     // :x: copy to msg queue
     g_listTransmit.push_back(data);
     // mutex Unlock
+
+    g_CondVar.notify_all();
     g_mtxTransmit.unlock();
 }
-
