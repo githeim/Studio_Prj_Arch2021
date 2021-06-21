@@ -22,6 +22,77 @@
 #include "NetworkTCP.h"
 #include "TcpSendRecvJpeg.h"
 
+#define TEST_INSTRUMENT
+
+#include <chrono>
+#include <vector>
+#include <list>
+#include <mutex>
+#include <thread>
+
+
+#ifdef TEST_INSTRUMENT
+void PrintTestReport(
+    std::string strTitle,
+   std::vector<float> &vecData
+         ) {
+
+  int iSize = vecData.size();
+  if (iSize == 0 )  {
+    printf("\033[1;31m[%s][%d] :x: [%s] Vec size 0 ! \033[m\n",
+        __FUNCTION__,__LINE__,strTitle.c_str());
+    return;
+  }
+  float fSum = 0;
+  for ( auto item : vecData) {
+    fSum += item;
+  }
+  float fAvg = fSum/iSize;
+  printf("\033[1;33m[%s][%d] :x: [%s]  \033[m\n",
+      __FUNCTION__,__LINE__,strTitle.c_str());
+  printf("\033[1;32m[%s][%d] :x: Total item [%d], avg [%f] \033[m\n",
+      __FUNCTION__,__LINE__,iSize,fAvg);
+}
+#endif
+
+
+std::mutex g_mtxTransmit;
+std::list<cv::Mat> g_listTransmit;
+std::thread* g_pThrTransmit;
+bool g_bTranmitRunFlag = false;
+
+void Hwnd_Transmit(
+    TTcpListenPort    *TcpListenPort,
+    TTcpConnectedPort *TcpConnectedPort
+    ) {
+
+  usleep(50000);
+  while (g_bTranmitRunFlag) {
+    
+printf("\033[1;36m[%s][%d] :x: size = [%d] \033[m\n",__FUNCTION__,__LINE__,g_listTransmit.size());
+
+    if (g_listTransmit.size() == 0 )
+    {
+      usleep(30000);
+      continue;
+    }
+    g_mtxTransmit.lock();
+    cv::Mat data = g_listTransmit.front();
+    g_listTransmit.pop_front();
+    g_mtxTransmit.unlock();
+    if (TcpSendImageAsJpeg(TcpConnectedPort,data)<0)  {
+      printf("\033[1;31m[%s][%d] :x: Err \033[m\n",__FUNCTION__,__LINE__);
+      continue;
+    }
+    usleep(1);
+  }
+  CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
+  CloseTcpListenPort(&TcpListenPort);  // Close listen port
+
+  printf("\033[1;33m[%s][%d] :x: Thread End \033[m\n",__FUNCTION__,__LINE__);
+
+}
+
 //#define EXCLUDE_RECOGNIZE_FACE true
 
 // create high performace jetson camera - loads the image directly to gpu memory or shared memory
@@ -53,8 +124,18 @@ int camera_face_recognition(int argc, char *argv[])
    socklen_t          clilen;
    short              listen_port;
    bool               usecamera=false;
-
     
+
+#ifdef TEST_INSTRUMENT
+   std::vector<float> vecCamCapture;
+   std::vector<float> vecVidCapture;
+   std::vector<float> vecImgXcoding;
+   std::vector<float> vecFaceFinder;
+   std::vector<float> vecCropEmbedding;
+   std::vector<float> vecClassifier;
+   std::vector<float> vecSendImg_TCP;
+   static int iCnt=0;
+#endif
     // -------------- Initialization -------------------
     
     face_embedder embedder;                         // deserialize recognition network 
@@ -121,10 +202,6 @@ int camera_face_recognition(int argc, char *argv[])
     // calculate fps
     double fps = 0.0;
     clock_t clk;
-    clock_t point1;
-    clock_t point2;
-    clock_t point3;
-    clock_t point4;
     clock_t now;
     
     // Detection vars
@@ -156,6 +233,11 @@ int camera_face_recognition(int argc, char *argv[])
 
    printf("Accepted connection Request\n");
 
+   // :x: Create Thread
+   g_bTranmitRunFlag = true;
+   g_pThrTransmit = new std::thread(Hwnd_Transmit,TcpListenPort,TcpConnectedPort);
+   printf("\033[1;33m[%s][%d] :x: Start \033[m\n",__FUNCTION__,__LINE__);
+
 // ------------------ "Detection" Loop -----------------------
     while(!user_quit){
 
@@ -171,7 +253,15 @@ int camera_face_recognition(int argc, char *argv[])
         else
          {
          
+#ifdef TEST_INSTRUMENT
+           auto startVidCapture= std::chrono::system_clock::now(); 
+#endif
           if( !inputStream->Capture((float4**)&imgOrigin, 1000) ) continue;
+#ifdef TEST_INSTRUMENT
+           auto endVidCapture= std::chrono::system_clock::now(); 
+           std::chrono::duration<double> diffVidCapture = endVidCapture-startVidCapture;
+           vecVidCapture.push_back((float)diffVidCapture.count());
+#endif
 
          }
 #else
@@ -181,11 +271,13 @@ int camera_face_recognition(int argc, char *argv[])
         printf("failed to load image\n");
 
 #endif        
-	point1 = clock();              // fps clock
 
+#ifdef TEST_INSTRUMENT
+        auto startImgXcoding= std::chrono::system_clock::now(); 
+#endif
         //since the captured image is located at shared memory, we also can access it from cpu 
         // here I define a cv::Mat for it to draw onto the image from CPU without copying data -- TODO: draw from CUDA
-        cudaRGBA32ToBGRA32(  (float4*)imgOrigin,  (float4*)imgOrigin, imgWidth, imgHeight); //ADDED DP
+//        cudaRGBA32ToBGRA32(  (float4*)imgOrigin,  (float4*)imgOrigin, imgWidth, imgHeight); //ADDED DP
         cv::Mat origin_cpu(imgHeight, imgWidth, CV_32FC4, imgOrigin);
            
 #ifndef EXCLUDE_RECOGNIZE_FACE
@@ -196,18 +288,37 @@ int camera_face_recognition(int argc, char *argv[])
         // create GpuMat form the same image thanks to shared memory
         cv::cuda::GpuMat imgRGB_gpu(imgHeight, imgWidth, CV_8UC3, rgb_gpu);                
 
+#ifdef TEST_INSTRUMENT
+        auto endImgXcoding= std::chrono::system_clock::now(); 
+        std::chrono::duration<double> diffImgXcoding = endImgXcoding-startImgXcoding;
+        vecImgXcoding.push_back((float)diffImgXcoding.count());
+#endif
+
+#ifdef TEST_INSTRUMENT
+        auto startFaceFinder= std::chrono::system_clock::now(); 
+#endif
+
         // pass the image to the MTCNN and get face detections
         std::vector<struct Bbox> detections;
         finder.findFace(imgRGB_gpu, &detections);
 
-	point2 = clock();              // fps clock
 
         // check if faces were detected, get face locations, bounding boxes and keypoints
         std::vector<cv::Rect> rects;
         std::vector<float*> keypoints;
         num_dets = get_detections(origin_cpu, &detections, &rects, &keypoints);               
+        
+#ifdef TEST_INSTRUMENT
+        auto endFaceFinder= std::chrono::system_clock::now(); 
+        std::chrono::duration<double> diffFaceFinder = endFaceFinder-startFaceFinder;
+        vecFaceFinder.push_back((float)diffFaceFinder.count());
+#endif
+
         // if faces detected
         if(num_dets > 0){
+#ifdef TEST_INSTRUMENT
+        auto startCropEmbedding= std::chrono::system_clock::now(); 
+#endif
             // crop and align the faces. Get faces to format for "dlib_face_recognition_model" to create embeddings
             std::vector<matrix<rgb_pixel>> faces;                                   
             crop_and_align_faces(imgRGB_gpu, cropped_buffer_gpu, cropped_buffer_cpu, &rects, &faces, &keypoints);
@@ -215,12 +326,24 @@ int camera_face_recognition(int argc, char *argv[])
             // generate face embeddings from the cropped faces and store them in a vector
             std::vector<matrix<float,0,1>> face_embeddings;
             embedder.embeddings(&faces, &face_embeddings);                        
+#ifdef TEST_INSTRUMENT
+        auto endCropEmbedding= std::chrono::system_clock::now(); 
+        std::chrono::duration<double> diffCropEmbedding = endCropEmbedding-startCropEmbedding;
+        vecCropEmbedding.push_back((float)diffCropEmbedding.count());
+#endif
            
-	point3 = clock();              // fps clock
+#ifdef TEST_INSTRUMENT
+            auto startClassifier= std::chrono::system_clock::now(); 
+#endif
 
             // feed the embeddings to the pretrained SVM's. Store the predicted labels in a vector
             std::vector<double> face_labels;
             classifier.prediction(&face_embeddings, &face_labels);                 
+#ifdef TEST_INSTRUMENT
+            auto endClassifier= std::chrono::system_clock::now(); 
+            std::chrono::duration<double> diffClassifier = endClassifier-startClassifier;
+            vecClassifier.push_back((float)diffClassifier.count());
+#endif
 
             // draw bounding boxes and labels to the original image 
             draw_detections(origin_cpu, &rects, &face_labels, &label_encodings);    
@@ -231,18 +354,49 @@ int camera_face_recognition(int argc, char *argv[])
 
             cv::putText(origin_cpu, str , cv::Point(0,20), 
                     cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0,0,0,255), 1 );
-	point4 = clock();              // fps clock
-
+#ifdef TEST_INSTRUMENT
+            auto startSendImg_TCP= std::chrono::system_clock::now(); 
+#endif
+#if 0 // :x: org
         //Render captured image
         if (TcpSendImageAsJpeg(TcpConnectedPort,origin_cpu)<0)  break;
+#else // tcp send
+        // :x: write on msg queue
+
+        // mutex Lock
+        g_mtxTransmit.lock();
+
+        // :x: copy to msg queue
+        g_listTransmit.push_back(origin_cpu);
+        // mutex Unlock
+        g_mtxTransmit.unlock();
+#endif // :x: for test
+
+#ifdef TEST_INSTRUMENT
+        auto endSendImg_TCP= std::chrono::system_clock::now(); 
+        std::chrono::duration<double> diffSendImg_TCP = endSendImg_TCP-startSendImg_TCP;
+        vecSendImg_TCP.push_back((float)diffSendImg_TCP.count());
+#endif
 
         // smooth FPS to make it readable
 	now = clock();
         fps = (0.90 * fps) + (0.1 * (1 / ((double)(now-clk)/CLOCKS_PER_SEC)));
         //fps = (0.90 * fps) + (0.1 * (1 / ((double)(clock()-clk)/CLOCKS_PER_SEC)));      
-	printf("======== fps:%.1lf capture:%ldms findFace:%ldms detect2:%ldms prediction:%ldms send:%ldms =======\n",
-			fps, (1000)*(point1-clk)/CLOCKS_PER_SEC, (1000)*(point2-point1)/CLOCKS_PER_SEC, (1000)*(point3-point2)/CLOCKS_PER_SEC, (1000)*(point4-point3)/CLOCKS_PER_SEC, (1000)*(now-point4)/CLOCKS_PER_SEC);
+	printf("======== fps:%.1lf  =======\n",
+			fps);
         if ((inputStream) && (!inputStream->IsStreaming())) break;
+#ifdef TEST_INSTRUMENT
+        iCnt++;
+        if (iCnt % 60 == 0 ) {
+    PrintTestReport("Vid Capture",    vecVidCapture);
+    PrintTestReport("Img Xcoding",    vecImgXcoding);
+    PrintTestReport("FaceFinder",     vecFaceFinder);
+    PrintTestReport("Crop Embedding", vecCropEmbedding);
+    PrintTestReport("Classifier",     vecClassifier);
+    PrintTestReport("SendImg_TCP",    vecSendImg_TCP);
+        }
+#endif
+
     }   
 
     SAFE_DELETE(camera);
@@ -250,8 +404,15 @@ int camera_face_recognition(int argc, char *argv[])
     CHECK(cudaFreeHost(rgb_cpu));
     CHECK(cudaFreeHost(cropped_buffer_cpu[0]));
     CHECK(cudaFreeHost(cropped_buffer_cpu[1]));
+#if 0 // :x: for test
     CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
     CloseTcpListenPort(&TcpListenPort);  // Close listen port
+#else
+    // join sender thread
+    g_bTranmitRunFlag=false;
+    g_pThrTransmit->join();
+#endif // :x: for test
+
     return 0;
 }
 
