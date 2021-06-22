@@ -46,7 +46,6 @@ void receiver(TTcpConnectedPort* TcpConnectedPort)
 int main(int argc, char *argv[])
 {
  TTcpConnectedPort *TcpConnectedPort=NULL;
- bool retvalue;
 
    if (argc !=3) 
     {
@@ -65,7 +64,8 @@ int main(int argc, char *argv[])
   std::chrono::system_clock::time_point prev;
   std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
   Mat Image;
-do {
+  Mat Image2;
+  do {
     queueMutex.lock();
     if (queueImage.empty())
     {
@@ -76,8 +76,8 @@ do {
     Image = queueImage.front();
     queueImage.pop_front();
     queueMutex.unlock();
-    cv::cvtColor(Image, Image, cv::COLOR_RGBA2BGRA);
-    imshow( "Server", Image ); // If a valid image is received then display it
+    cv::cvtColor(Image, Image2, cv::COLOR_RGBA2BGRA);
+    imshow( "Server", Image2); // If a valid image is received then display it
     prev = now;
     now = std::chrono::system_clock::now();
     auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now - prev);
