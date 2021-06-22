@@ -121,6 +121,7 @@ int camera_face_recognition(int argc, char *argv[])
 
     // calculate fps
     double fps = 0.0;
+    double fpsCurr = 0.0;
     clock_t clk;
     clock_t now;
 
@@ -256,10 +257,11 @@ int camera_face_recognition(int argc, char *argv[])
 #endif
         // smooth FPS to make it readable
 	now = clock();
-        fps = (0.90 * fps) + (0.1 * (1 / ((double)(now-clk)/CLOCKS_PER_SEC)));
+	    fpsCurr = (1 / ((double)(now-clk)/CLOCKS_PER_SEC));
+        fps = (0.90 * fps) + (0.1 * fpsCurr);
         //fps = (0.90 * fps) + (0.1 * (1 / ((double)(clock()-clk)/CLOCKS_PER_SEC)));
-	printf("======== fps:%.1lf  time:%lu ms =======\n",
-			fps, 1000*(now-clk)/CLOCKS_PER_SEC);
+	printf("======== fps:%.1lf (%.1lf)  time:%lu ms =======\n",
+			fps, fpsCurr, 1000*(now-clk)/CLOCKS_PER_SEC);
     if (ImageHandler::GetInstance()->IsNotStreaming())
         break;
 #ifdef TEST_INSTRUMENT
@@ -283,7 +285,7 @@ int camera_face_recognition(int argc, char *argv[])
     CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
     CloseTcpListenPort(&TcpListenPort);  // Close listen port
 #else
-    NetworkInterface::GetInstance()->Stop();
+    NetworkInterface::GetInstance()->StopWhenEmpty();
 #endif // :x: for test
 
     return 0;
