@@ -1,0 +1,56 @@
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_57f8f/fast"
+/usr/bin/make -f CMakeFiles/cmTC_57f8f.dir/build.make CMakeFiles/cmTC_57f8f.dir/build
+make[1]: Entering directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_57f8f.dir/CheckSymbolExists.c.o
+/usr/bin/gcc-7   -fPIC    -o CMakeFiles/cmTC_57f8f.dir/CheckSymbolExists.c.o   -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_57f8f
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_57f8f.dir/link.txt --verbose=1
+/usr/bin/gcc-7 -fPIC     CMakeFiles/cmTC_57f8f.dir/CheckSymbolExists.c.o  -o cmTC_57f8f 
+CMakeFiles/cmTC_57f8f.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x14): undefined reference to `pthread_create'
+CheckSymbolExists.c:(.text+0x18): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_57f8f.dir/build.make:97: recipe for target 'cmTC_57f8f' failed
+make[1]: *** [cmTC_57f8f] Error 1
+make[1]: Leaving directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_57f8f/fast' failed
+make: *** [cmTC_57f8f/fast] Error 2
+
+File /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_64f0d/fast"
+/usr/bin/make -f CMakeFiles/cmTC_64f0d.dir/build.make CMakeFiles/cmTC_64f0d.dir/build
+make[1]: Entering directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_64f0d.dir/CheckFunctionExists.c.o
+/usr/bin/gcc-7   -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_64f0d.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_64f0d
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_64f0d.dir/link.txt --verbose=1
+/usr/bin/gcc-7 -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_64f0d.dir/CheckFunctionExists.c.o  -o cmTC_64f0d -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_64f0d.dir/build.make:97: recipe for target 'cmTC_64f0d' failed
+make[1]: *** [cmTC_64f0d] Error 1
+make[1]: Leaving directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_64f0d/fast' failed
+make: *** [cmTC_64f0d/fast] Error 2
+
+

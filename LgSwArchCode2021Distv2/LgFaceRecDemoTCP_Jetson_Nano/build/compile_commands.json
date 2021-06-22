@@ -1,0 +1,67 @@
+[
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/LgFaceRecDemoTCP.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/LgFaceRecDemoTCP.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/LgFaceRecDemoTCP.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/NetworkTCP.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/NetworkTCP.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/NetworkTCP.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/TcpSendRecvJpeg.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/TcpSendRecvJpeg.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/TcpSendRecvJpeg.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/alignment.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/alignment.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/alignment.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/baseEngine.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/baseEngine.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/baseEngine.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/common.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/common.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/common.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/face_classifier.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/face_classifier.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/face_classifier.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/face_embedder.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/face_embedder.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/face_embedder.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/mtcnn.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/mtcnn.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/mtcnn.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/network.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/network.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/network.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/onet_rt.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/onet_rt.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/onet_rt.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/pnet_rt.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/pnet_rt.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/pnet_rt.cpp"
+},
+{
+  "directory": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build",
+  "command": "/usr/bin/g++-7   -I/usr/local/cuda/include -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../jetson-utils-master_latest/build/aarch64/include/jetson-utils -I/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/../../dlib-19.22/dlib/build -I/usr/include/gstreamer-1.0 -I/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/include/libxml2 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -isystem /usr/local/include/opencv4  -Wno-deprecated-declarations -g   -std=c++11 -o CMakeFiles/LgFaceRecDemoTCP.dir/src/rnet_rt.cpp.o -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/rnet_rt.cpp",
+  "file": "/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/src/rnet_rt.cpp"
+}
+]

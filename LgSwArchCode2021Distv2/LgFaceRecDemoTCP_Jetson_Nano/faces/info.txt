@@ -1,16 +1,11 @@
 +
-num classes: 13
+num classes: 8
 #	label:	images:
 0	Dan_Plakosh	2
-1	Yim	3
-2	Chandler	3
-3	Joey	3
-4	hwang	1
-5	Ross	4
-6	Phoebe	4
-7	Monica	4
-8	Kim	3
-9	Seo	3
-10	Ko	3
-11	You	3
-12	Rachel	6
+1	Chandler	3
+2	Joey	3
+3	Ross	4
+4	Phoebe	4
+5	Monica	4
+6	You	3
+7	Rachel	6

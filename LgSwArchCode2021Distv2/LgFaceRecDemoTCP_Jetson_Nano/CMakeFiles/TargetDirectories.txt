@@ -1,3 +1,0 @@
-/home/lg/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/CMakeFiles/rebuild_cache.dir
-/home/lg/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/CMakeFiles/LgFaceRecDemoTCP.dir
-/home/lg/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/CMakeFiles/edit_cache.dir

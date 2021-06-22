@@ -1,0 +1,3 @@
+/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/rebuild_cache.dir
+/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/LgFaceRecDemoTCP.dir
+/home/lg/workspace/joyou_Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/build/CMakeFiles/edit_cache.dir

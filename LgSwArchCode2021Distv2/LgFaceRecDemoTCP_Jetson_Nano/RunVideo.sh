@@ -1,2 +1,2 @@
-./LgFaceRecDemoTCP 5000 --input-codec=h264 friends.mp4
+./build/LgFaceRecDemoTCP 5900 --input-codec=h264 friends3.mp4
 

@@ -1,0 +1,119 @@
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_4aadf/fast"
+/usr/bin/make -f CMakeFiles/cmTC_4aadf.dir/build.make CMakeFiles/cmTC_4aadf.dir/build
+make[1]: Entering directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_4aadf.dir/CheckSymbolExists.c.o
+/usr/bin/gcc-7    -o CMakeFiles/cmTC_4aadf.dir/CheckSymbolExists.c.o   -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_4aadf
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4aadf.dir/link.txt --verbose=1
+/usr/bin/gcc-7      -rdynamic CMakeFiles/cmTC_4aadf.dir/CheckSymbolExists.c.o  -o cmTC_4aadf 
+CMakeFiles/cmTC_4aadf.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x14): undefined reference to `pthread_create'
+CheckSymbolExists.c:(.text+0x18): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_4aadf.dir/build.make:97: recipe for target 'cmTC_4aadf' failed
+make[1]: *** [cmTC_4aadf] Error 1
+make[1]: Leaving directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_4aadf/fast' failed
+make: *** [cmTC_4aadf/fast] Error 2
+
+File /home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_fd611/fast"
+/usr/bin/make -f CMakeFiles/cmTC_fd611.dir/build.make CMakeFiles/cmTC_fd611.dir/build
+make[1]: Entering directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fd611.dir/CheckFunctionExists.c.o
+/usr/bin/gcc-7   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_fd611.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_fd611
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fd611.dir/link.txt --verbose=1
+/usr/bin/gcc-7  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_fd611.dir/CheckFunctionExists.c.o  -o cmTC_fd611 -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_fd611.dir/build.make:97: recipe for target 'cmTC_fd611' failed
+make[1]: *** [cmTC_fd611] Error 1
+make[1]: Leaving directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_fd611/fast' failed
+make: *** [cmTC_fd611/fast] Error 2
+
+
+Determining if the function cblas_ddot exists failed with the following output:
+Change Dir: /home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_f5cc2/fast"
+/usr/bin/make -f CMakeFiles/cmTC_f5cc2.dir/build.make CMakeFiles/cmTC_f5cc2.dir/build
+make[1]: Entering directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f5cc2.dir/CheckFunctionExists.c.o
+/usr/bin/gcc-7   -DCHECK_FUNCTION_EXISTS=cblas_ddot   -o CMakeFiles/cmTC_f5cc2.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_f5cc2
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f5cc2.dir/link.txt --verbose=1
+/usr/bin/gcc-7  -DCHECK_FUNCTION_EXISTS=cblas_ddot    -rdynamic CMakeFiles/cmTC_f5cc2.dir/CheckFunctionExists.c.o  -o cmTC_f5cc2 
+CMakeFiles/cmTC_f5cc2.dir/CheckFunctionExists.c.o: In function `main':
+CheckFunctionExists.c:(.text+0x10): undefined reference to `cblas_ddot'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_f5cc2.dir/build.make:97: recipe for target 'cmTC_f5cc2' failed
+make[1]: *** [cmTC_f5cc2] Error 1
+make[1]: Leaving directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_f5cc2/fast' failed
+make: *** [cmTC_f5cc2/fast] Error 2
+
+
+Determining if the function sgesv exists failed with the following output:
+Change Dir: /home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_f4e70/fast"
+/usr/bin/make -f CMakeFiles/cmTC_f4e70.dir/build.make CMakeFiles/cmTC_f4e70.dir/build
+make[1]: Entering directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f4e70.dir/CheckFunctionExists.c.o
+/usr/bin/gcc-7   -DCHECK_FUNCTION_EXISTS=sgesv   -o CMakeFiles/cmTC_f4e70.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_f4e70
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f4e70.dir/link.txt --verbose=1
+/usr/bin/gcc-7  -DCHECK_FUNCTION_EXISTS=sgesv    -rdynamic CMakeFiles/cmTC_f4e70.dir/CheckFunctionExists.c.o  -o cmTC_f4e70 
+CMakeFiles/cmTC_f4e70.dir/CheckFunctionExists.c.o: In function `main':
+CheckFunctionExists.c:(.text+0x10): undefined reference to `sgesv'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_f4e70.dir/build.make:97: recipe for target 'cmTC_f4e70' failed
+make[1]: *** [cmTC_f4e70] Error 1
+make[1]: Leaving directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_f4e70/fast' failed
+make: *** [cmTC_f4e70/fast] Error 2
+
+
+Determining if the function sgesv_ exists failed with the following output:
+Change Dir: /home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_1df42/fast"
+/usr/bin/make -f CMakeFiles/cmTC_1df42.dir/build.make CMakeFiles/cmTC_1df42.dir/build
+make[1]: Entering directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1df42.dir/CheckFunctionExists.c.o
+/usr/bin/gcc-7   -DCHECK_FUNCTION_EXISTS=sgesv_   -o CMakeFiles/cmTC_1df42.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_1df42
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1df42.dir/link.txt --verbose=1
+/usr/bin/gcc-7  -DCHECK_FUNCTION_EXISTS=sgesv_    -rdynamic CMakeFiles/cmTC_1df42.dir/CheckFunctionExists.c.o  -o cmTC_1df42 
+CMakeFiles/cmTC_1df42.dir/CheckFunctionExists.c.o: In function `main':
+CheckFunctionExists.c:(.text+0x10): undefined reference to `sgesv_'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_1df42.dir/build.make:97: recipe for target 'cmTC_1df42' failed
+make[1]: *** [cmTC_1df42] Error 1
+make[1]: Leaving directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/dlib-19.22/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_1df42/fast' failed
+make: *** [cmTC_1df42/fast] Error 2
+
+

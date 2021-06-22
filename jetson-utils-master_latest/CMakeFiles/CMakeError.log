@@ -1,0 +1,56 @@
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /home/lg/workspace/joyou_Studio_Prj_Arch2021/jetson-utils-master_latest/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_e269c/fast"
+/usr/bin/make -f CMakeFiles/cmTC_e269c.dir/build.make CMakeFiles/cmTC_e269c.dir/build
+make[1]: Entering directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/jetson-utils-master_latest/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e269c.dir/CheckSymbolExists.c.o
+/usr/bin/cc   -fPIC    -o CMakeFiles/cmTC_e269c.dir/CheckSymbolExists.c.o   -c /home/lg/workspace/joyou_Studio_Prj_Arch2021/jetson-utils-master_latest/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_e269c
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e269c.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC     -rdynamic CMakeFiles/cmTC_e269c.dir/CheckSymbolExists.c.o  -o cmTC_e269c 
+CMakeFiles/cmTC_e269c.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x14): undefined reference to `pthread_create'
+CheckSymbolExists.c:(.text+0x18): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_e269c.dir/build.make:97: recipe for target 'cmTC_e269c' failed
+make[1]: *** [cmTC_e269c] Error 1
+make[1]: Leaving directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/jetson-utils-master_latest/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_e269c/fast' failed
+make: *** [cmTC_e269c/fast] Error 2
+
+File /home/lg/workspace/joyou_Studio_Prj_Arch2021/jetson-utils-master_latest/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/lg/workspace/joyou_Studio_Prj_Arch2021/jetson-utils-master_latest/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_c9375/fast"
+/usr/bin/make -f CMakeFiles/cmTC_c9375.dir/build.make CMakeFiles/cmTC_c9375.dir/build
+make[1]: Entering directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/jetson-utils-master_latest/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c9375.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_c9375.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_c9375
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c9375.dir/link.txt --verbose=1
+/usr/bin/cc -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_c9375.dir/CheckFunctionExists.c.o  -o cmTC_c9375 -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_c9375.dir/build.make:97: recipe for target 'cmTC_c9375' failed
+make[1]: *** [cmTC_c9375] Error 1
+make[1]: Leaving directory '/home/lg/workspace/joyou_Studio_Prj_Arch2021/jetson-utils-master_latest/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_c9375/fast' failed
+make: *** [cmTC_c9375/fast] Error 2
+
+

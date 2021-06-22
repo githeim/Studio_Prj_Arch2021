@@ -1,1 +1,1 @@
-./LgFaceRecDemoTCP 5000
+./build/LgFaceRecDemoTCP 5900
