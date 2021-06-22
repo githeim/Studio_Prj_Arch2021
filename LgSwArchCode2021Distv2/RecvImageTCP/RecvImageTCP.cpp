@@ -7,9 +7,11 @@
 //----------------------------------------------------------------------------------------------
 #include <stdio.h>
 #include <stdlib.h>
+#include <opencv2/imgproc.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
+#include <list>
 #include "NetworkTCP.h"
 #include "TcpSendRecvJpeg.h"
 
@@ -20,6 +22,26 @@ using namespace std;
 // main - This is the main program for the RecvImageUDP demo 
 // program  contains the control loop
 //-----------------------------------------------------------------
+
+std::mutex queueMutex;
+std::list<cv::Mat> queueImage;
+
+void receiver(TTcpConnectedPort* TcpConnectedPort)
+{
+    bool retvalue;
+    Mat Image;
+    while (1)
+    {
+        retvalue = TcpRecvImageAsJpeg(TcpConnectedPort, &Image);
+        if (retvalue)
+        {
+            queueMutex.lock();
+            queueImage.push_back(Image);
+            printf("queue added:%llu\n", queueImage.size());
+            queueMutex.unlock();
+        }
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -37,16 +59,30 @@ int main(int argc, char *argv[])
        printf("OpenTcpConnection\n");
        return(-1); 
      }
+  std::thread runner(receiver, TcpConnectedPort);
 
   namedWindow( "Server", WINDOW_AUTOSIZE );// Create a window for display.
- 
+  std::chrono::system_clock::time_point prev;
+  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
   Mat Image;
 do {
-    retvalue=TcpRecvImageAsJpeg(TcpConnectedPort,&Image);
-   
-    if( retvalue) imshow( "Server", Image ); // If a valid image is received then display it
-    else break;
-
+    queueMutex.lock();
+    if (queueImage.empty())
+    {
+        queueMutex.unlock();
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
+        continue;
+    }
+    Image = queueImage.front();
+    queueImage.pop_front();
+    queueMutex.unlock();
+    cv::cvtColor(Image, Image, cv::COLOR_RGBA2BGRA);
+    imshow( "Server", Image ); // If a valid image is received then display it
+    prev = now;
+    now = std::chrono::system_clock::now();
+    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now - prev);
+    double fps = 1000.0 / milliseconds.count();
+    std::cout << "timediff:" << milliseconds.count() << " ms  fps:" << fps << std::endl;
    } while (waitKey(10) != 'q'); // loop until user hits quit
 
  CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
