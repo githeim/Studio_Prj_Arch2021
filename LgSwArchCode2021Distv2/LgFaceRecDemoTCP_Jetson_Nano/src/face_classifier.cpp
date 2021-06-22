@@ -182,9 +182,9 @@ void face_classifier::prediction(   std::vector<sample_type_embedding> *face_emb
                     label = (max >= mean_threshold ? i : label);    // set label
                 }
             }
-            printf("class: %d:\tmean: %f\tvotes: %d\n\t\tsumm: %f\n", i, mean, votes[i],summed[i]);
+//            printf("class: %d:\tmean: %f\tvotes: %d\n\t\tsumm: %f\n", i, mean, votes[i],summed[i]);
         }
-        printf("label: %f\n\n",label);
+//        printf("label: %f\n\n",label);
         //printf("-1 votes: %d\n", this->num_classifiers - num_votes);
 
         face_labels->push_back(label);
