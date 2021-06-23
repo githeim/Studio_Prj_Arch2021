@@ -4,6 +4,9 @@
 #include <dlib/svm_threaded.h>
 #include <dlib/svm.h>
 #include <vector>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <errno.h>
 
 #include "mtcnn.h"
 #include "kernels.h"
@@ -24,13 +27,12 @@
 
 #include "ImageHandler.h"
 #include "NetworkInterface.h"
+#include "PerformanceLogger.h"
 
 //#define SPLIT_FACE_DECTOR
 #ifdef SPLIT_FACE_DECTOR
 #include "FaceDetector.h"
 #endif // SPLIT_FACE_DECTOR
-
-#define TEST_INSTRUMENT
 
 #include <chrono>
 #include <vector>
@@ -39,45 +41,10 @@
 #include <thread>
 
 
-#ifdef TEST_INSTRUMENT
-void PrintTestReport(
-    std::string strTitle,
-   std::vector<float> &vecData
-         ) {
-
-  int iSize = vecData.size();
-  if (iSize == 0 )  {
-    printf("\033[1;31m[%s][%d] :x: [%s] Vec size 0 ! \033[m\n",
-        __FUNCTION__,__LINE__,strTitle.c_str());
-    return;
-  }
-  float fSum = 0;
-  for ( auto item : vecData) {
-    fSum += item;
-  }
-  float fAvg = fSum/iSize;
-  printf("\033[1;33m[%s][%d] :x: [%s]  \033[m\n",
-      __FUNCTION__,__LINE__,strTitle.c_str());
-  printf("\033[1;32m[%s][%d] :x: Total item [%d], avg [%f] \033[m\n",
-      __FUNCTION__,__LINE__,iSize,fAvg);
-}
-#endif
-
 // perform face recognition with Raspberry Pi camera
 int camera_face_recognition(int argc, char *argv[])
   {
    short              listen_port;
-
-#ifdef TEST_INSTRUMENT
-   std::vector<float> vecCamCapture;
-   std::vector<float> vecVidCapture;
-   std::vector<float> vecImgXcoding;
-   std::vector<float> vecFaceFinder;
-   std::vector<float> vecCropEmbedding;
-   std::vector<float> vecClassifier;
-   std::vector<float> vecSendImg_TCP;
-   static int iCnt=0;
-#endif
 
 #ifndef SPLIT_FACE_DECTOR
     face_embedder embedder;                         // deserialize recognition network
@@ -141,8 +108,17 @@ int camera_face_recognition(int argc, char *argv[])
 // ------------------ "Detection" Loop -----------------------
     while(!user_quit){
 
+        if (NetworkInterface::GetInstance()->GetCurrentTransmitQueueSize() > 3)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        
         clk = clock();              // fps clock
 	float* imgOrigin = NULL;    // camera image
+
+        PerformanceLogger::GetInstance()->setStartTimeCapture();
+
         // the 2nd arg 1000 defines timeout, true is for the "zeroCopy" param what means the image will be stored to shared memory
     imgOrigin = ImageHandler::GetInstance()->GetImageData();
         if (imgOrigin == NULL)
@@ -151,11 +127,11 @@ int camera_face_recognition(int argc, char *argv[])
            continue;
         }
 
+        PerformanceLogger::GetInstance()->setEndTimeCapture();
+
         printf("capture image\n");
 
-#ifdef TEST_INSTRUMENT
-        auto startImgXcoding= std::chrono::system_clock::now();
-#endif
+        PerformanceLogger::GetInstance()->setStartTimeImgXcoding();
 
         //since the captured image is located at shared memory, we also can access it from cpu
         // here I define a cv::Mat for it to draw onto the image from CPU without copying data -- TODO: draw from CUDA
@@ -169,15 +145,9 @@ int camera_face_recognition(int argc, char *argv[])
         // create GpuMat form the same image thanks to shared memory
         cv::cuda::GpuMat imgRGB_gpu(imgHeight, imgWidth, CV_8UC3, rgb_gpu);
 
-#ifdef TEST_INSTRUMENT
-        auto endImgXcoding= std::chrono::system_clock::now();
-        std::chrono::duration<double> diffImgXcoding = endImgXcoding-startImgXcoding;
-        vecImgXcoding.push_back((float)diffImgXcoding.count());
-#endif
+        PerformanceLogger::GetInstance()->setEndTimeImgXcoding();
 
-#ifdef TEST_INSTRUMENT
-        auto startFaceFinder= std::chrono::system_clock::now();
-#endif
+        PerformanceLogger::GetInstance()->setStartTimeFaceFinder();
 
         // pass the image to the MTCNN and get face detections
         std::vector<struct Bbox> detections;
@@ -189,72 +159,49 @@ int camera_face_recognition(int argc, char *argv[])
         std::vector<float*> keypoints;
         num_dets = get_detections(origin_cpu, &detections, &rects, &keypoints);
 
-#ifdef TEST_INSTRUMENT
-        auto endFaceFinder= std::chrono::system_clock::now();
-        std::chrono::duration<double> diffFaceFinder = endFaceFinder-startFaceFinder;
-        vecFaceFinder.push_back((float)diffFaceFinder.count());
-#endif
+        PerformanceLogger::GetInstance()->setEndTimeFaceFinder();
 
         // if faces detected
         if(num_dets > 0){
-#ifdef TEST_INSTRUMENT
-        auto startCropEmbedding= std::chrono::system_clock::now();
-#endif
+
+            PerformanceLogger::GetInstance()->setStartTimeCropEmbedding();
+
             // crop and align the faces. Get faces to format for "dlib_face_recognition_model" to create embeddings
             std::vector<matrix<rgb_pixel>> faces;
             crop_and_align_faces(imgRGB_gpu, cropped_buffer_gpu, cropped_buffer_cpu, &rects, &faces, &keypoints);
 
             // generate face embeddings from the cropped faces and store them in a vector
             std::vector<matrix<float,0,1>> face_embeddings;
-#ifdef SPLIT_FACE_DECTOR
-            FaceDetector::GetInstance()->Embeddings(&faces, &face_embeddings);
-#else
+
             embedder.embeddings(&faces, &face_embeddings);
-#endif // SPLIT_FACE_DECTOR
 
-#ifdef TEST_INSTRUMENT
-        auto endCropEmbedding= std::chrono::system_clock::now();
-        std::chrono::duration<double> diffCropEmbedding = endCropEmbedding-startCropEmbedding;
-        vecCropEmbedding.push_back((float)diffCropEmbedding.count());
-#endif
+            PerformanceLogger::GetInstance()->setEndTimeCropEmbedding();
 
-#ifdef TEST_INSTRUMENT
-            auto startClassifier= std::chrono::system_clock::now();
-#endif
+            PerformanceLogger::GetInstance()->setStartTimeClassifier();
 
             // feed the embeddings to the pretrained SVM's. Store the predicted labels in a vector
             std::vector<double> face_labels;
-#ifdef SPLIT_FACE_DECTOR
-            FaceDetector::GetInstance()->Prediction(&face_embeddings, &face_labels);
-#else
-            classifier.prediction(&face_embeddings, &face_labels);
-#endif // SPLIT_FACE_DECTOR
-#ifdef TEST_INSTRUMENT
-            auto endClassifier= std::chrono::system_clock::now();
-            std::chrono::duration<double> diffClassifier = endClassifier-startClassifier;
-            vecClassifier.push_back((float)diffClassifier.count());
-#endif
 
+            classifier.prediction(&face_embeddings, &face_labels);
+
+            PerformanceLogger::GetInstance()->setEndTimeClassifier();
+
+            PerformanceLogger::GetInstance()->setStartTimeDrawDetection();
+            
             // draw bounding boxes and labels to the original image
             draw_detections(origin_cpu, &rects, &face_labels, &label_encodings);
+
+            PerformanceLogger::GetInstance()->setEndTimeDrawDetection();
         }
             char str[256];
             sprintf(str, "TensorRT  %.1lf FPS", fps);               // print the FPS to the bar
 
             cv::putText(origin_cpu, str , cv::Point(0,20),
                     cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0,0,0,255), 1 );
-#ifdef TEST_INSTRUMENT
-            auto startSendImg_TCP= std::chrono::system_clock::now();
-#endif
 
         // :x: write on msg queue
         NetworkInterface::GetInstance()->PushDataToSend(origin_cpu);
 
-#ifdef TEST_INSTRUMENT
-        auto endSendImg_TCP= std::chrono::system_clock::now();
-        std::chrono::duration<double> diffSendImg_TCP = endSendImg_TCP-startSendImg_TCP;
-        vecSendImg_TCP.push_back((float)diffSendImg_TCP.count());
-#endif
         // smooth FPS to make it readable
 	now = clock();
 	    fpsCurr = (1 / ((double)(now-clk)/CLOCKS_PER_SEC));
@@ -264,17 +211,8 @@ int camera_face_recognition(int argc, char *argv[])
 			fps, fpsCurr, 1000*(now-clk)/CLOCKS_PER_SEC);
     if (ImageHandler::GetInstance()->IsNotStreaming())
         break;
-#ifdef TEST_INSTRUMENT
-        iCnt++;
-        if (iCnt % 60 == 0 ) {
-    PrintTestReport("Vid Capture",    vecVidCapture);
-    PrintTestReport("Img Xcoding",    vecImgXcoding);
-    PrintTestReport("FaceFinder",     vecFaceFinder);
-    PrintTestReport("Crop Embedding", vecCropEmbedding);
-    PrintTestReport("Classifier",     vecClassifier);
-    PrintTestReport("SendImg_TCP",    vecSendImg_TCP);
-        }
-#endif
+
+    PerformanceLogger::GetInstance()->PrintTestReport();
 
     }
 
@@ -426,6 +364,12 @@ int main(int argc, char *argv[])
 {
 
     int state = 0;
+
+    int ret = setpriority(PRIO_PGRP, getpgid(0), -20);
+    if (ret == -1)
+    {
+        printf("setpriorty err:%d\n", errno);
+    }
 
     ImageHandler::GetInstance()->Initialize(argc, argv);
 
