@@ -2,8 +2,6 @@
 
 #include "ImageHandler.h"
 
-extern std::vector<float> vecVidCapture;
-
 gstCamera* getCamera(){
     gstCamera* camera = gstCamera::Create(gstCamera::DefaultWidth, gstCamera::DefaultHeight, NULL);
 	if( !camera ){
@@ -111,18 +109,10 @@ float* ImageHandler::GetImageData()
     }
     else if (m_videoStream != nullptr)
     {
-#ifdef TEST_INSTRUMENT
-        auto startVidCapture= std::chrono::system_clock::now();
-#endif
         if (!m_videoStream->Capture((float4**)&imgOrigin, 1000))
         {
             fprintf(stderr, "failed to capture RGBA image from video\n");
         }
-#ifdef TEST_INSTRUMENT
-        auto endVidCapture= std::chrono::system_clock::now();
-        std::chrono::duration<double> diffVidCapture = endVidCapture-startVidCapture;
-        vecVidCapture.push_back((float)diffVidCapture.count());
-#endif
     }
     else
     {
@@ -143,4 +133,3 @@ int ImageHandler::GetImageHeight()
 {
     return m_ImgHeight;
 }
-
