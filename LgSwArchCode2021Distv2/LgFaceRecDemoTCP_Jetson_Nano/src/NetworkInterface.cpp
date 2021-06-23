@@ -1,7 +1,9 @@
 #include "NetworkInterface.h"
 #include "TcpSendRecvJpeg.h"
+#include "PerformanceLogger.h"
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <errno.h>
 
 void runJpegEncoding()
 {
@@ -65,6 +67,19 @@ int NetworkInterface::Initialize(short listen_port)
     g_pThrJpegEncoding = std::thread(runJpegEncoding);
     printf("\033[1;33m[%s][%d] :x: Start \033[m\n",__FUNCTION__,__LINE__);
 
+    int err;
+    struct sched_param param;
+    param.sched_priority = 99;
+
+    if ((err = pthread_setschedparam(g_pThrJpegEncoding.native_handle(), SCHED_RR, &param)) != 0)
+    {
+        printf(" ERROR: pthread_setschedparam err:%d\n", err);
+    }
+    else
+    {
+        printf(" set jpegEncoding thread(%lu) priority :%d\n", g_pThrJpegEncoding.native_handle(), param.sched_priority);
+    }
+
 }
 
 void NetworkInterface::Stop()
@@ -119,12 +134,15 @@ void NetworkInterface::Hwnd_JpegEncoding(    ) {
 
         JpegEncodedData  jpegData;
 
+        PerformanceLogger::GetInstance()->setStartTimeEncodingJPEG();
+
         begin = clock();
         cv::imencode(".jpg", data, jpegData.sendbuff, param);
-        end = clock();
 
         PushJpegData(jpegData);
-        
+
+        end = clock();
+        PerformanceLogger::GetInstance()->setEndTimeEncodingJPEG();
         printf("encoding time:%lu ms\n", 1000*(end-begin)/CLOCKS_PER_SEC);
     }
     CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
@@ -160,6 +178,8 @@ void NetworkInterface::Hwnd_Transmit(    ) {
             g_listJpeg.pop_front();
         }
 
+        PerformanceLogger::GetInstance()->setStartTimeSendImg_TCP();
+
         begin = clock();
         imagesize = htonl(data.sendbuff.size()); // convert image size to network format
         if (WriteDataTcp(TcpConnectedPort,(unsigned char *)&imagesize,sizeof(imagesize))!=sizeof(imagesize)) {
@@ -168,6 +188,8 @@ void NetworkInterface::Hwnd_Transmit(    ) {
         sent_size = WriteDataTcp(TcpConnectedPort, data.sendbuff.data(), data.sendbuff.size());
         end = clock();
 
+        PerformanceLogger::GetInstance()->setEndTimeSendImg_TCP();
+
         printf("sending time:%lu ms sent size:%lu\n", 1000*(end-begin)/CLOCKS_PER_SEC, sent_size);
     }
     CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
@@ -175,6 +197,16 @@ void NetworkInterface::Hwnd_Transmit(    ) {
 
     printf("\033[1;33m[%s][%d] :x: Thread End \033[m\n",__FUNCTION__,__LINE__);
 
+}
+
+size_t NetworkInterface::GetCurrentTransmitQueueSize()
+{
+    size_t size;
+    g_mtxJpeg.lock();
+    size = g_listJpeg.size();
+    g_mtxJpeg.unlock();
+
+    return size;
 }
 
 void NetworkInterface::PushJpegData(JpegEncodedData &jpegData) {
