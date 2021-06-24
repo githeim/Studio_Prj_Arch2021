@@ -29,10 +29,7 @@
 #include "NetworkInterface.h"
 #include "PerformanceLogger.h"
 
-//#define SPLIT_FACE_DECTOR
-#ifdef SPLIT_FACE_DECTOR
 #include "FaceDetector.h"
-#endif // SPLIT_FACE_DECTOR
 
 #include <chrono>
 #include <vector>
@@ -46,11 +43,9 @@ int camera_face_recognition(int argc, char *argv[])
   {
    short              listen_port;
 
-#ifndef SPLIT_FACE_DECTOR
     face_embedder embedder;                         // deserialize recognition network
     face_classifier classifier(&embedder);          // train OR deserialize classification SVM's
     if(classifier.need_restart() == 1) return 1;    // small workaround - if svms were trained theres some kind of memory problem when generate mtcnn
-#endif // !SPLIT_FACE_DECTOR
 
     // -------------- Initialization -------------------
     bool user_quit = false;
@@ -86,6 +81,9 @@ int camera_face_recognition(int argc, char *argv[])
     cudaAllocMapped( (void**) &cropped_buffer_cpu[0], (void**) &cropped_buffer_gpu[0], 150*150*3*sizeof(uchar) );
     cudaAllocMapped( (void**) &cropped_buffer_cpu[1], (void**) &cropped_buffer_gpu[1], 150*150*3*sizeof(uchar) );
 
+    FaceDetector::CreateInstance(embedder, classifier, finder);
+    FaceDetector::GetInstance()->Initialize();
+
     // calculate fps
     double fps = 0.0;
     double fpsCurr = 0.0;
@@ -96,13 +94,9 @@ int camera_face_recognition(int argc, char *argv[])
     int num_dets = 0;
     std::vector<std::string> label_encodings;       // vector for the real names of the classes/persons
 
-#ifdef SPLIT_FACE_DECTOR
-    FaceDetector::GetInstance()->GetLabelEncoding(&label_encodings);
-#else
     // get the possible class names
     classifier.get_label_encoding(&label_encodings);
-#endif // SPLIT_FACE_DECTOR
-
+    
     NetworkInterface::GetInstance()->Initialize(listen_port);
 
 // ------------------ "Detection" Loop -----------------------
@@ -177,31 +171,15 @@ int camera_face_recognition(int argc, char *argv[])
 
             PerformanceLogger::GetInstance()->setEndTimeCropEmbedding();
 
-            PerformanceLogger::GetInstance()->setStartTimeClassifier();
-
-            // feed the embeddings to the pretrained SVM's. Store the predicted labels in a vector
-            std::vector<double> face_labels;
-
-            classifier.prediction(&face_embeddings, &face_labels);
-
-            PerformanceLogger::GetInstance()->setEndTimeClassifier();
-
-            PerformanceLogger::GetInstance()->setStartTimeDrawDetection();
-            
-            // draw bounding boxes and labels to the original image
-            draw_detections(origin_cpu, &rects, &face_labels, &label_encodings);
-
-            PerformanceLogger::GetInstance()->setEndTimeDrawDetection();
+            FaceDetector::GetInstance()->PushClassifyFaces(origin_cpu, num_dets, rects, label_encodings, face_embeddings, fps);
         }
-            char str[256];
-            sprintf(str, "TensorRT  %.1lf FPS", fps);               // print the FPS to the bar
+        else {
+            std::vector<matrix<float,0,1>> face_embeddings;
 
-            cv::putText(origin_cpu, str , cv::Point(0,20),
-                    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0,0,0,255), 1 );
-
-        // :x: write on msg queue
-        NetworkInterface::GetInstance()->PushDataToSend(origin_cpu);
-
+            FaceDetector::GetInstance()->PushClassifyFaces(origin_cpu, num_dets, rects, label_encodings, face_embeddings, fps);
+            //FaceDetector::GetInstance()->ClassifyFaces(origin_cpu, num_dets, rects, label_encodings, face_embeddings, fps);
+        }
+        
         // smooth FPS to make it readable
 	now = clock();
 	    fpsCurr = (1 / ((double)(now-clk)/CLOCKS_PER_SEC));
@@ -372,10 +350,6 @@ int main(int argc, char *argv[])
     }
 
     ImageHandler::GetInstance()->Initialize(argc, argv);
-
-#ifdef SPLIT_FACE_DECTOR
-    FaceDetector::GetInstance();
-#endif // SPLIT_FACE_DECTOR
 
 
     state = camera_face_recognition( argc, argv );
