@@ -31,6 +31,7 @@ public:
     void PushDataToSend(cv::Mat &data);
     void Stop();
     void StopWhenEmpty();
+    size_t GetCurrentTransmitQueueSize();
 
 private:
     NetworkInterface();
