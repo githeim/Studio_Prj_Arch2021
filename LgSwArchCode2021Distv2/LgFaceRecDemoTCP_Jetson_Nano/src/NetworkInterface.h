@@ -13,6 +13,8 @@
 
 struct JpegEncodedData {
     std::vector<uchar> sendbuff;
+    unsigned char * encrypted_data;
+    unsigned int encrypted_len;
 };
 
 class NetworkInterface {
