@@ -2,9 +2,21 @@
 #define IMAGE_HANDLER_H
 
 #include <mutex>
+#include <fstream>
 
 #include "gstCamera.h"
-#include "videoSource.h"
+//#include "videoSource.h"
+
+typedef struct {
+ std::ifstream    mpegfile;
+ int         width;
+ int         height;
+ void        *inputImgGPU;
+ void        *output;
+ imageFormat inputFormat;
+ size_t      inputImageSize;
+
+} TMotionJpegFileDesc;
 
 class ImageHandler
 {
@@ -24,9 +36,11 @@ public:
 private:
     static ImageHandler *m_Instance;
     gstCamera*  m_gstCamera;
-    videoSource* m_videoStream;
+//    videoSource* m_videoStream;
+    TMotionJpegFileDesc MotionJpegFd;
     int         m_ImgWidth;
     int         m_ImgHeight;
+    unsigned int FrameCount=0;
 
     std::mutex  m_ImageSourceLock;
 
