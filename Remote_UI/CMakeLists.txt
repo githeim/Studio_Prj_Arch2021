@@ -57,6 +57,7 @@ SET ( LIBRARY_LISTS ${LIBRARY_LISTS}
   opencv_imgproc 
   opencv_video 
   opencv_videoio
+  yaml-cpp
     )
  
 # commone link library directories (-L)
@@ -96,4 +97,7 @@ TARGET_LINK_LIBRARIES(${TEST_RUNNER}
                        gtest 
                        ${CMAKE_PROJECT_NAME})
 
+# Setup config file
+CONFIGURE_FILE (config/Remote_UI_config.yaml 
+                ${CMAKE_BUILD_TYPE}/config/Remote_UI_config.yaml)
 
