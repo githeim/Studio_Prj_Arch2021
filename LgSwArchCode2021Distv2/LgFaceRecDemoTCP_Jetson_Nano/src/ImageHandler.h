@@ -1,62 +1,50 @@
-#ifndef NETWORK_INTERFACE_H
-#define NETWORK_INTERFACE_H
+#ifndef IMAGE_HANDLER_H
+#define IMAGE_HANDLER_H
 
-#include <list>
 #include <mutex>
-#include <condition_variable>
-#include <thread>
-#include <condition_variable>
+#include <fstream>
 
-#include "NetworkTCP.h"
+#include "gstCamera.h"
+//#include "videoSource.h"
 
-#include <opencv2/videoio.hpp>
+typedef struct {
+ std::ifstream    mpegfile;
+ int         width;
+ int         height;
+ void        *inputImgGPU;
+ void        *output;
+ imageFormat inputFormat;
+ size_t      inputImageSize;
 
-struct JpegEncodedData {
-    std::vector<uchar> sendbuff;
-    unsigned char * encrypted_data;
-    unsigned int encrypted_len;
-};
+} TMotionJpegFileDesc;
 
-class NetworkInterface {
+class ImageHandler
+{
 public:
-    ~NetworkInterface();
+    ~ImageHandler();
 
-    static NetworkInterface* GetInstance();
+    static ImageHandler *GetInstance();
 
-    void Hwnd_JpegEncoding();
-    void Hwnd_Transmit();
+    int Initialize(int argc, char *argv[]);
 
-    int Initialize(short listen_port);
+    bool IsNotStreaming();
+    float* GetImageData();
+    int GetImageWidth();
+    int GetImageHeight();
 
-    void PushJpegData(JpegEncodedData &jpegData);
-
-    void PushDataToSend(cv::Mat &data);
-    void Stop();
-    void StopWhenEmpty();
-    size_t GetCurrentTransmitQueueSize();
 
 private:
-    NetworkInterface();
+    static ImageHandler *m_Instance;
+    gstCamera*  m_gstCamera;
+//    videoSource* m_videoStream;
+    TMotionJpegFileDesc MotionJpegFd;
+    int         m_ImgWidth;
+    int         m_ImgHeight;
+    unsigned int FrameCount=0;
 
-    static NetworkInterface *m_Instance;
+    std::mutex  m_ImageSourceLock;
 
-    clock_t clkLastTransmit;
-
-    TTcpListenPort    *TcpListenPort;
-    TTcpConnectedPort *TcpConnectedPort;
-
-    std::condition_variable g_CondJpeg;
-    std::mutex g_mtxJpeg;
-    std::thread g_pThrJpegEncoding;
-    std::list<JpegEncodedData> g_listJpeg;
-
-    std::condition_variable g_CondMat;
-    std::mutex g_mtxMat;
-    std::list<cv::Mat> g_listMat;
-    std::thread g_pThrTransmit;
-    
-    bool g_bTranmitRunFlag;
-    bool g_bStopWhenEmpty;
+    ImageHandler();
 };
 
-#endif // NETWORK_INTERFACE_H
+#endif // IMAGE_HANDLER_H
