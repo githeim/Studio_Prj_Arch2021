@@ -49,6 +49,6 @@ target_link_libraries( LgFaceRecDemoTCP cublas)
 target_link_libraries( LgFaceRecDemoTCP jetson-utils)
 target_link_libraries( LgFaceRecDemoTCP jpeg )
 target_link_libraries( LgFaceRecDemoTCP png )
-
-
+target_link_libraries( LgFaceRecDemoTCP crypto )
+target_link_libraries( LgFaceRecDemoTCP ssl )
 
