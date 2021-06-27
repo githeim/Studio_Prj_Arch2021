@@ -135,19 +135,27 @@ int StrDecrypt(const unsigned char* ciphertext, const int ciphertext_len, unsign
 //-----------------------------------------------------------------
 int TcpSendImageAsJpeg(TTcpConnectedPort * TcpConnectedPort,cv::Mat Image)
 {
-    clock_t begin;
-    clock_t encode;
-    clock_t end;
     unsigned int imagesize;
-    begin = clock();
     cv::imencode(".jpg", Image, sendbuff, param);
-    encode = clock();
+
+#ifdef ENCRYPT_DATA
+    unsigned char * encrypted_data = new unsigned char[sendbuff.size() + EVP_MAX_BLOCK_LENGTH];
+    unsigned int encrypted_len = StrEncrypt(sendbuff.data(), sendbuff.size(), encrypted_data);
+    imagesize = htonl(encrypted_len); // convert image size to network format
+    if (WriteDataTcp(TcpConnectedPort, (unsigned char*)&imagesize, sizeof(imagesize)) != sizeof(imagesize))
+    {
+        delete[] encrypted_data;
+        return(-1);
+    }
+    int ret = (WriteDataTcp(TcpConnectedPort, encrypted_data, encrypted_len));
+    delete[] encrypted_data;
+    return ret;
+#else
     imagesize=htonl(sendbuff.size()); // convert image size to network format
     if (WriteDataTcp(TcpConnectedPort,(unsigned char *)&imagesize,sizeof(imagesize))!=sizeof(imagesize))
     return(-1);
     return(WriteDataTcp(TcpConnectedPort,sendbuff.data(), sendbuff.size()));
-    end = clock();
-    printf("encoding time:%lu ms sending time:%lu\n", 1000*(encode-begin)/CLOCKS_PER_SEC, 1000*(end-encode)/CLOCKS_PER_SEC);
+#endif
 }
 
 //-----------------------------------------------------------------
