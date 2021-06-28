@@ -29,21 +29,20 @@ private slots:
   // :x: button handlers should be in the 'slots'
   void handleTestRun();
   void handleBtnExit();
+  void handleShutter();
 private:
 
   // :x: Grid Layout
   QGridLayout *m_pLayoutGrid;
   // :x: Buttons
   QPushButton *m_pBtnTestRun;
-  QPushButton *m_pBtnB;
-  QPushButton *m_pBtnC;
-  QPushButton *m_pBtnD;
-
   QPushButton *m_pBtnExit;
+  QPushButton *m_pBtnShutter;
   QLabel      *m_pLabel00;
   QImage      *m_pImage00;
   QPainter    *m_pPainter;
 
+  bool m_bShutter = false;
 
 };
 

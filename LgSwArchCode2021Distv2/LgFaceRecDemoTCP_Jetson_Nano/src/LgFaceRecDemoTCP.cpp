@@ -35,7 +35,6 @@
 #endif // SPLIT_FACE_DECTOR
 
 #include <chrono>
-#include <vector>
 #include <list>
 #include <mutex>
 #include <thread>

@@ -1,4 +1,5 @@
 #include "CRunModeDlg.h"
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include <QCoreApplication>
 
@@ -16,6 +17,9 @@ CRunModeDlg::CRunModeDlg(QWidget *parent)
   m_pImage00->fill(0xffff00ff);
 
 
+  m_pBtnShutter    = new QPushButton("Shutter",this);
+  connect(m_pBtnShutter,    SIGNAL (released()), this, SLOT (handleShutter()));
+
   m_pBtnTestRun    = new QPushButton("Test Run",this);
   connect(m_pBtnTestRun,    SIGNAL (released()), this, SLOT (handleTestRun()));
   m_pBtnExit = new QPushButton("Exit",this);
@@ -28,7 +32,8 @@ CRunModeDlg::CRunModeDlg(QWidget *parent)
 
   m_pLayoutGrid->addWidget(m_pLabel00 ,0,0);
   m_pLayoutGrid->addWidget(m_pBtnTestRun    ,1,1);
-  m_pLayoutGrid->addWidget(m_pBtnExit ,2,1);
+  m_pLayoutGrid->addWidget(m_pBtnShutter    ,2,1);
+  m_pLayoutGrid->addWidget(m_pBtnExit ,3,1);
 
   m_pLayoutGrid->setColumnStretch(1, 10);
   m_pLayoutGrid->setColumnStretch(2, 20);
@@ -40,10 +45,8 @@ CRunModeDlg::CRunModeDlg(QWidget *parent)
 
 CRunModeDlg::~CRunModeDlg(){
   delete m_pLayoutGrid;
+  delete m_pBtnShutter;
   delete m_pBtnTestRun;
-  delete m_pBtnB;
-  delete m_pBtnC;
-  delete m_pBtnD;
   delete m_pBtnExit;
   delete m_pLabel00;
 
@@ -54,6 +57,10 @@ CRunModeDlg::~CRunModeDlg(){
 
 }
 
+void CRunModeDlg::handleShutter() {
+  printf("\033[1;33m[%s][%d] :x: chk \033[m\n",__FUNCTION__,__LINE__);
+  m_bShutter = true;
+}
 void CRunModeDlg::handleTestRun(){
   printf("\033[1;33m[%s][%d] :x: Btn Event \033[m\n",__FUNCTION__,__LINE__);
   m_pThrVideo = new std::thread(&CRunModeDlg::LoopVideo, this);
@@ -102,22 +109,29 @@ void CRunModeDlg::LoopVideo() {
   }
 
 
+  static int cnt = 0;
   Mat Image;
   while (1) {
     bRetvalue =TcpRecvImageAsJpeg(TcpConnectedPort,&Image);
-    printf("\033[1;36m[%s][%d] :x: bRetvalue = %d \033[m\n",
-        __FUNCTION__,__LINE__,bRetvalue);
     if (bRetvalue) {
-      printf("\033[1;33m[%s][%d] :x: chk  %d %d \033[m\n",__FUNCTION__,__LINE__,
-          Image.cols,Image.rows);
       auto img = 
         QImage((const unsigned char*) Image.data,Image.cols,Image.rows,
             Image.step,QImage::Format_RGB888);
       
       m_pLabel00->setPixmap(QPixmap::fromImage(img));
+      if (m_bShutter == true) {
+        m_bShutter = false;
+        printf("\033[1;33m[%s][%d] :x: Take Picture \033[m\n",
+            __FUNCTION__,__LINE__);
+        cnt++;
+        std::string strFileName = std::string("blabla_")+
+                                  std::to_string(cnt) +".jpg";
+        cv::cvtColor(Image,Image,COLOR_BGR2RGB);
+        imwrite(strFileName,Image);
+      }
     }
   }
-printf("\033[1;36m[%s][%d] :x: End \033[m\n",__FUNCTION__,__LINE__);
+  printf("\033[1;36m[%s][%d] :x: End \033[m\n",__FUNCTION__,__LINE__);
 
  CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
 }
