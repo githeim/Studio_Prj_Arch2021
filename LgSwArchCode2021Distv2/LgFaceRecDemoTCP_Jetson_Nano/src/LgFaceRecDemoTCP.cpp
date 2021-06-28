@@ -32,7 +32,6 @@
 #include "FaceDetector.h"
 
 #include <chrono>
-#include <vector>
 #include <list>
 #include <mutex>
 #include <thread>
