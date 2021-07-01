@@ -189,7 +189,7 @@ ImageHandler *ImageHandler::GetInstance()
     return m_Instance;
 }
 
-int ImageHandler::Initialize(int argc, char *argv[])
+int ImageHandler::Initialize(int argc, char *argv[], bool usecamera)
 {
     char *filename;
     if (argc > 2)
@@ -201,7 +201,7 @@ int ImageHandler::Initialize(int argc, char *argv[])
         filename = nullptr;
     }
 
-    if (filename == nullptr)
+    if (usecamera == true)
     {
         printf("camera\n");
         m_gstCamera = getCamera();                // create jetson camera - PiCamera. USB-Cam needs different operations in Loop!! not implemented!
