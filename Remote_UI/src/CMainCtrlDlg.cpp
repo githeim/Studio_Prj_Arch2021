@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 
 #include <memory>
+#include <unistd.h>
 
 std::thread *g_pThrCmd = nullptr;
 
@@ -108,7 +109,6 @@ CMainCtrlDlg::CMainCtrlDlg(QWidget *parent)
   // create remote commands
   Create_commands();
 
-
   // Kill remote process
   std::vector<std::string> vecCmdList = {
     m_strCmdClearLgFaceRecDemo
@@ -120,7 +120,7 @@ CMainCtrlDlg::CMainCtrlDlg(QWidget *parent)
   m_pLayoutGrid = new QGridLayout;
 
   m_pBtnA    = new QPushButton("Run Mode",this);
-  connect(m_pBtnA,    SIGNAL (released()), this, SLOT (handleBtnA()));
+  connect(m_pBtnA,    SIGNAL (released()), this, SLOT (handleRun()));
   m_pBtnTestRun    = new QPushButton("Test Run Mode",this);
   connect(m_pBtnTestRun,    SIGNAL (released()), this, SLOT (handleBtnTestRun()));
   m_pBtnC    = new QPushButton("Rescan",this);
@@ -167,8 +167,22 @@ CMainCtrlDlg::~CMainCtrlDlg(){
 
 }
 
-void CMainCtrlDlg::handleBtnA(){
+void CMainCtrlDlg::handleRun(){
   printf("\033[1;33m[%s][%d] :x: Btn Event \033[m\n",__FUNCTION__,__LINE__);
+  printf("\033[1;33m[%s][%d] :x: clear all process \033[m\n",
+      __FUNCTION__,__LINE__);
+
+  std::vector<std::string> vecCmdList = {
+    m_strCmdClearLgFaceRecDemo,
+    m_strCmdRun
+  };
+  g_pThrCmd = new std::thread(CmdThread,this,vecCmdList);
+
+  m_pRunModeDlg = new CRunModeDlg();
+  m_pRunModeDlg->SetMode(MODE_CAM);
+  m_pRunModeDlg->setWindowTitle("Run Mode");
+  m_pRunModeDlg->setModal(true);
+  m_pRunModeDlg->showNormal();
 }
 void CMainCtrlDlg::handleBtnTestRun(){
   printf("\033[1;33m[%s][%d] :x: Btn Event \033[m\n",__FUNCTION__,__LINE__);
@@ -184,6 +198,7 @@ void CMainCtrlDlg::handleBtnTestRun(){
   g_pThrCmd = new std::thread(CmdThread,this,vecCmdList);
 
   m_pRunModeDlg = new CRunModeDlg();
+  m_pRunModeDlg->SetMode(MODE_TESTRUN);
   m_pRunModeDlg->setWindowTitle("Test Run Mode");
   m_pRunModeDlg->setModal(true);
   m_pRunModeDlg->showNormal();
@@ -215,12 +230,20 @@ void CMainCtrlDlg::handleAddData(){
   }
 
   // get file path
+  char szDefaultPath[512] ={};
+  getcwd(szDefaultPath,sizeof(szDefaultPath));
   QString fileName = QFileDialog::getOpenFileName(this,
-    tr("Open Image"), "/home/", tr("Image Files (*.png *.jpg *.bmp)"));
+    tr("Open Image"), szDefaultPath, tr("Image Files (*.png *.jpg *.bmp)"));
   std::string strFileName = fileName.toStdString();
   if (!strFileName.empty()) {
     printf("\033[1;32m[%s][%d] :x: The File Name is [%s] \033[m\n",
         __FUNCTION__,__LINE__, strFileName.c_str());
+  }
+  else
+  {
+printf("\033[1;33m[%s][%d] :x: No Input \033[m\n",__FUNCTION__,__LINE__);
+return;
+
   }
 
   if (g_pThrDataAddSequence) {
@@ -252,12 +275,18 @@ void CMainCtrlDlg::SetTxt(std::string strVal) {
 }
 
 void CMainCtrlDlg::Create_commands() {
+  // :x: the command for running run mode
+  m_strCmdRun =  
+    g_Config["CAM_PATH"].as<std::string>() +
+    std::string("/")+
+    g_Config["CAM_RUN_CMD"].as<std::string>();
+
   // :x: the command for running test run mode
   m_strCmdTestRun =  
     g_Config["CAM_PATH"].as<std::string>() +
     std::string("/")+
     g_Config["CAM_TEST_RUN_CMD"].as<std::string>();
-// -->   
+// --> ex)
 // "/home/udr/workspace/00_Ko/Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano/bg_DemoWithVideo.sh"
 
 
@@ -270,10 +299,5 @@ void CMainCtrlDlg::Create_commands() {
   // :x: the command clean out the process LgFaceRecDemo
   m_strCmdClearLgFaceRecDemo = 
     "pkill LgFaceRecDemoTC";
-
-
-
-
-
 
 }

@@ -23,15 +23,15 @@ SET ( OUTPUT_ELF
 SET ( INCLUDE_DIR
         include
         /usr/include/opencv4/
-        ../../Common
+        ../LgSwArchCode2021Distv2/Common
         )
 # Sources for library build
 FILE( GLOB LIBSRC_FILES libsrc/*.cpp)
 
 # sources for exec
 FILE( GLOB SRC_FILES src/*.cpp 
-           ../../Common/NetworkTCP.cpp
-           ../../Common/TcpSendRecvJpeg.cpp
+           ../LgSwArchCode2021Distv2/Common/NetworkTCP.cpp
+           ../LgSwArchCode2021Distv2/Common/TcpSendRecvJpeg.cpp
            )
 
 # sources for testing
@@ -58,6 +58,8 @@ SET ( LIBRARY_LISTS ${LIBRARY_LISTS}
   opencv_video 
   opencv_videoio
   yaml-cpp
+  crypto
+  ssl 
     )
  
 # commone link library directories (-L)
