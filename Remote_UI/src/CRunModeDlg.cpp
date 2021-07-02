@@ -20,8 +20,8 @@ CRunModeDlg::CRunModeDlg(QWidget *parent)
   m_pBtnShutter    = new QPushButton("Shutter",this);
   connect(m_pBtnShutter,    SIGNAL (released()), this, SLOT (handleShutter()));
 
-  m_pBtnTestRun    = new QPushButton("Test Run",this);
-  connect(m_pBtnTestRun,    SIGNAL (released()), this, SLOT (handleTestRun()));
+  m_pBtnConnect    = new QPushButton("Connect",this);
+  connect(m_pBtnConnect,    SIGNAL (released()), this, SLOT (handleTestRun()));
   m_pBtnExit = new QPushButton("Exit",this);
   connect(m_pBtnExit, SIGNAL (released()), this, SLOT (handleBtnExit()));
 
@@ -31,7 +31,7 @@ CRunModeDlg::CRunModeDlg(QWidget *parent)
   m_pLabel00->setPixmap(QPixmap::fromImage(*m_pImage00));
 
   m_pLayoutGrid->addWidget(m_pLabel00 ,0,0);
-  m_pLayoutGrid->addWidget(m_pBtnTestRun    ,1,1);
+  m_pLayoutGrid->addWidget(m_pBtnConnect    ,1,1);
   m_pLayoutGrid->addWidget(m_pBtnShutter    ,2,1);
   m_pLayoutGrid->addWidget(m_pBtnExit ,3,1);
 
@@ -46,7 +46,7 @@ CRunModeDlg::CRunModeDlg(QWidget *parent)
 CRunModeDlg::~CRunModeDlg(){
   delete m_pLayoutGrid;
   delete m_pBtnShutter;
-  delete m_pBtnTestRun;
+  delete m_pBtnConnect;
   delete m_pBtnExit;
   delete m_pLabel00;
 
@@ -77,10 +77,11 @@ void CRunModeDlg::handleBtnExit(){
 
 void CRunModeDlg::LoopVideo() {
   TTcpConnectedPort *TcpConnectedPort=NULL;
-  //std::string strIP ("192.168.0.120");
-  std::string strIP ("192.168.0.101");
+  std::string strIP = g_Config["CAM_IP"].as<std::string>();
+
   std::string strPort ("5000");
-  printf("\033[1;33m[%s][%d] :x: Start Connecting \033[m\n",__FUNCTION__,__LINE__);
+  printf("\033[1;33m[%s][%d] :x: Start Connecting [%s][%s]\033[m\n",
+      __FUNCTION__,__LINE__,strIP.c_str(),strPort.c_str());
 
   int iRetryNumber = 6;
   int iRetryCount = 0;
@@ -92,9 +93,10 @@ void CRunModeDlg::LoopVideo() {
     if ((TcpConnectedPort=OpenTcpConnection(
             strIP.c_str(),strPort.c_str()))==NULL)  
     {
-      printf("\033[1;31m[%s][%d] :x: Connection Err , Retry count %d \033[m\n",
+      printf("\033[1;31m[%s][%d] :x: Connection Err Retry count %d,"
+             "wait 3 seconds then Retry \033[m\n",
           __FUNCTION__,__LINE__,i);
-      sleep(1);
+      sleep(3);
     }
     else {
       printf("\033[1;33m[%s][%d] :x: Connection Success \033[m\n",
@@ -111,24 +113,31 @@ void CRunModeDlg::LoopVideo() {
 
   static int cnt = 0;
   Mat Image;
+printf("\033[1;33m[%s][%d] :x: chk \033[m\n",__FUNCTION__,__LINE__);
   while (1) {
+
     bRetvalue =TcpRecvImageAsJpeg(TcpConnectedPort,&Image);
+    if (GetMode() == MODE_TESTRUN) {
+      cv::cvtColor(Image,Image,COLOR_BGR2RGB);
+    }
     if (bRetvalue) {
       auto img = 
         QImage((const unsigned char*) Image.data,Image.cols,Image.rows,
             Image.step,QImage::Format_RGB888);
       
       m_pLabel00->setPixmap(QPixmap::fromImage(img));
-      if (m_bShutter == true) {
-        m_bShutter = false;
-        printf("\033[1;33m[%s][%d] :x: Take Picture \033[m\n",
-            __FUNCTION__,__LINE__);
-        cnt++;
-        std::string strFileName = std::string("blabla_")+
-                                  std::to_string(cnt) +".jpg";
-        cv::cvtColor(Image,Image,COLOR_BGR2RGB);
-        imwrite(strFileName,Image);
-      }
+
+    }
+    if (m_bShutter == true) {
+      m_bShutter = false;
+      printf("\033[1;33m[%s][%d] :x: Take Picture \033[m\n",
+          __FUNCTION__,__LINE__);
+
+      cv::cvtColor(Image,Image,COLOR_BGR2RGB);
+      cnt++;
+      std::string strFileName = std::string("blabla_")+
+        std::to_string(cnt) +".jpg";
+      imwrite(strFileName,Image);
     }
   }
   printf("\033[1;36m[%s][%d] :x: End \033[m\n",__FUNCTION__,__LINE__);

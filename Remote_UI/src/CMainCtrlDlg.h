@@ -21,6 +21,8 @@ public:
   void SetTxt(std::string strVal);
 
   // :x: remote commands
+  // :x: run mode
+  std::string  m_strCmdRun;
   // :x: run test run mode
   std::string  m_strCmdTestRun;
   // :x: start retrain
@@ -36,7 +38,7 @@ signals:
   void valueCh(std::string strMsg);
 private slots:
   // :x: button handlers should be in the 'slots'
-  void handleBtnA();
+  void handleRun();
   void handleBtnTestRun();
   void handleBtnRescan();
   void handleAddData();
