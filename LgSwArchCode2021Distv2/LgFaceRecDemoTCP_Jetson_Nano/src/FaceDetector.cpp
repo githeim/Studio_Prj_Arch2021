@@ -54,7 +54,7 @@ void FaceDetector::PushClassifyFaces(
             double &fps
 ) {
     std::shared_ptr<ClassifyData> data = std::make_shared<ClassifyData>();
-    data->origin_cpu = origin_cpu;
+    data->origin_cpu = origin_cpu.clone();
     data->num_dets = num_dets;
     data->rects = rects;
     data->label_encodings = label_encodings;
