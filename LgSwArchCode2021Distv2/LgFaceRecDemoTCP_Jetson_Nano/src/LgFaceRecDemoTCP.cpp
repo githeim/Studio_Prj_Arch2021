@@ -53,6 +53,7 @@ int camera_face_recognition(int argc, char *argv[])
    std::vector<cv::Rect> rects_interpolated;
 #endif /* FEATURE_INTERPOLATE_FACES */
     bool usecamera = false;
+    int frame_count = 0;
 
     face_embedder embedder;                         // deserialize recognition network
     face_classifier classifier(&embedder);          // train OR deserialize classification SVM's
@@ -79,7 +80,7 @@ int camera_face_recognition(int argc, char *argv[])
 	fprintf(stderr,"l 		enable learning mode	\n");
 	fprintf(stderr,"c		intentionally enable camera  \n");
 	fprintf(stderr,"v		intentionally enable video	\n");
-	fprintf(stderr,"====================================================== \n");	
+	fprintf(stderr,"====================================================== \n");
 	for(int i=1 ; i<argc ; i++) {
 		//printf("argv[%d] = %s \n", i, argv[i]);
 		if(argv[i][0] == 'i')
@@ -110,7 +111,6 @@ int camera_face_recognition(int argc, char *argv[])
 	}
 #endif /* FEATURE_INTERPOLATE_FACES */
 
-
     ImageHandler::GetInstance()->Initialize(argc, argv, usecamera);
 
     imgWidth = ImageHandler::GetInstance()->GetImageWidth();
@@ -136,6 +136,9 @@ int camera_face_recognition(int argc, char *argv[])
 
     FaceDetector::CreateInstance(embedder, classifier, finder);
     FaceDetector::GetInstance()->Initialize();
+    if (!usecamera) {
+        FaceDetector::GetInstance()->setVerifyDetection(true);
+    }
 
     // calculate fps
     double fps = 0.0;
@@ -152,7 +155,7 @@ int camera_face_recognition(int argc, char *argv[])
 
     // get the possible class names
     classifier.get_label_encoding(&label_encodings);
-    
+
     NetworkInterface::GetInstance()->Initialize(listen_port);
 
     clk = clock();              // fps clock
@@ -165,7 +168,7 @@ int camera_face_recognition(int argc, char *argv[])
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;
         }
-        
+
 	float* imgOrigin = NULL;    // camera image
 
         PerformanceLogger::GetInstance()->setStartTimeCapture();
@@ -189,6 +192,8 @@ int camera_face_recognition(int argc, char *argv[])
 //        cudaRGBA32ToBGRA32(  (float4*)imgOrigin,  (float4*)imgOrigin, imgWidth, imgHeight); //ADDED DP
         cv::Mat origin_cpu(imgHeight, imgWidth, CV_32FC4, imgOrigin);
 
+        NetworkInterface::GetInstance()->PushDataToSend(origin_cpu);
+
         // the mtcnn pipeline is based on GpuMat 8bit values 3 channels while the captured image is RGBA32
         // i use a kernel from jetson-inference to remove the A-channel and float to uint8
         cudaRGBA32ToRGB8( (float4*)imgOrigin, (uchar3*)rgb_gpu, imgWidth, imgHeight );
@@ -202,10 +207,10 @@ int camera_face_recognition(int argc, char *argv[])
 
 
 #ifdef FEATURE_INTERPOLATE_FACES
-		if(skipframes_cfg == true) 
+		if(skipframes_cfg == true)
 		{
 			skipcount_curr++;
-			if(skipcount_curr%skipcount_cfg == 0) 
+			if(skipcount_curr%skipcount_cfg == 0)
 			{
 				skipcount_curr=0;
 				skipframe_curr=false;
@@ -262,7 +267,7 @@ int camera_face_recognition(int argc, char *argv[])
         }
 #endif /* FEATURE_INTERPOLATE_FACES */
 
-	// smooth FPS to make it readable	
+	// smooth FPS to make it readable
 	clk = now;
 	now = clock();
 	    fpsCurr = (1 / ((double)(now-clk)/CLOCKS_PER_SEC));
