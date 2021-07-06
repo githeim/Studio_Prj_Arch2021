@@ -14,15 +14,9 @@
 #include "NetworkTCP.h"
 #include "TcpSendRecvJpeg.h"
 #include <list>
-#include <json/json.h>
 
 using namespace cv;
 using namespace std;
-#define ENCRYPT_DATA
-
-#ifdef ENCRYPT_DATA
-extern int StrDecrypt(const unsigned char* ciphertext, const int ciphertext_len, unsigned char* plaintext);
-#endif
 
 // {"fno":"2",
 // "dts" : "6",
@@ -42,102 +36,27 @@ std::string test_json = "\
 \"4\" : {\"roi\":{\"x\":\"512\", \"y\" : \"287\", \"w\" : \"61\", \"h\" : \"61\"}, \"label\" : \"Unknown\", \"category\" : \"0\"}, \
 \"5\" : {\"roi\":{\"x\":\"810\", \"y\" : \"315\", \"w\" : \"65\", \"h\" : \"65\"}, \"label\" : \"Ross\", \"category\" : \"1\"}}";
 
-struct DetectionInfo {
-    int x;
-    int y;
-    int w;
-    int h;
-    int category;
-    std::string label;
-};
 
 std::mutex g_ListLock;
 std::list<cv::Mat> g_ImageList;
 std::list<std::vector<DetectionInfo>> g_InfoList;
 
-int stringToInt(const char *value) {
-    if (!value)
-        return 0;
-    size_t start = 0;
-    if (value[0] == '"')
-        start = 1;
-
-    return strtol(&value[start], NULL, 10);
-}
-void parseJsonValues(const std::string &data, std::vector<DetectionInfo> &result)
-{
-    Json::Value value;
-    std::istringstream data_stream(data);
-    int count;
-
-    cout << data << std::endl;
- 
-    data_stream >> value;
- 
-    count = stringToInt(value["dts"].asCString());
-    std::cout << "fno:" << value["fno"] << std::endl;
-    std::cout << "dts:" << count << std::endl;
-
-    for (int i = 0; i < count; ++i) {
-        std::string key = std::to_string(i);
-        DetectionInfo info;
-        info.x = stringToInt(value[key]["roi"]["x"].asCString());
-        info.y = stringToInt(value[key]["roi"]["y"].asCString());
-        info.w = stringToInt(value[key]["roi"]["w"].asCString());
-        info.h = stringToInt(value[key]["roi"]["h"].asCString());
-        info.category = stringToInt(value[key]["category"].asCString());
-        info.label = value[key]["label"].asString();
-
-        result.push_back(info);
-    }
-
-}
-
 void runnerRecvDetectionInfo(TTcpConnectedPort* TcpConnectedPort)
 {
-    unsigned char* buff;	/* receive buffer */
-#ifdef ENCRYPT_DATA
-    unsigned char* decrypted_buff;	/* decrypted buffer */
-#endif // ENCRYPT_DATA
-    unsigned int datasize;
-    do {
-        if (ReadDataTcp(TcpConnectedPort, (unsigned char*)&datasize, sizeof(datasize)) != sizeof(datasize))
-        {
-            printf("fail to read2:\n");
-        }
-        datasize = ntohl(datasize); // convert image size to host format
-        buff = new (std::nothrow) unsigned char[datasize];
-#ifdef ENCRYPT_DATA
-        decrypted_buff = new (std::nothrow) unsigned char[datasize + 1];
-#endif
+    std::vector<DetectionInfo> result;
 
-        if ((ReadDataTcp(TcpConnectedPort, buff, datasize)) == datasize)
-        {
-#ifdef ENCRYPT_DATA
-            memset(decrypted_buff, 0, datasize + 1);
-            unsigned int decrypted_len = StrDecrypt(buff, datasize, decrypted_buff);
-            std::string jsonData((const char *)decrypted_buff, decrypted_len);
-            printf("read detection data:%d\n", decrypted_len);
-            std::vector<DetectionInfo> result;
-            parseJsonValues(jsonData, result);
+    do {
+        result.clear();
+        if (TcpRecvDetectionInfo(TcpConnectedPort, result)) {
             g_ListLock.lock();
             g_InfoList.push_back(result);
             g_ListLock.unlock();
             // parse json data from decrypted_buff
-#else
-            printf("read detection data:%d\n", datasize);
-            // parse json data from buff
-#endif
         }
         else
         {
             printf("fail to read2:\n");
         }
-        delete[] buff;
-#ifdef ENCRYPT_DATA
-        delete[] decrypted_buff;
-#endif // ENCRYPT_DATA
-
     } while (waitKey(10) != 'q'); // loop until user hits quit
 
 }
@@ -199,6 +118,7 @@ int main(int argc, char* argv[])
     std::chrono::system_clock::time_point prev;
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
     double totalFps = 0.0;
+    double avrageFps = 0.0;
     int frameCount = 0;
     bool received;
     do {
@@ -245,16 +165,17 @@ int main(int argc, char* argv[])
             double fps = 1000.0 / milliseconds.count();
             totalFps += fps;
             frameCount++;
+            avrageFps = totalFps / frameCount;
 
             char str[256];
-            sprintf_s(str, "Frame %d  Rate:%.1lf FPS", frameCount, fps);               // print the FPS to the bar
+            sprintf_s(str, "Frame %d  Rate:%.1lf FPS", frameCount, avrageFps);               // print the FPS to the bar
 
             cv::putText(Image, str, cv::Point(0, 20),
                 cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 255, 255, 255), 3);
             cv::putText(Image, str, cv::Point(0, 20),
                 cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
 
-            std::cout << "frameCount:" << frameCount << " timediff:" << milliseconds.count() << " ms  fps : " << fps << " avrage : " << totalFps / frameCount << std::endl;
+            std::cout << "frameCount:" << frameCount << " timediff:" << milliseconds.count() << " ms  fps : " << fps << " avrage : " << avrageFps << std::endl;
             imshow("Server", Image); // If a valid image is received then display it
         }
         else {
