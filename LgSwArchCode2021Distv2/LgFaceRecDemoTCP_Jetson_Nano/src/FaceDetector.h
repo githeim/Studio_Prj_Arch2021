@@ -15,6 +15,7 @@ struct ClassifyData {
     std::vector<std::string> label_encodings;
     std::vector<matrix<float,0,1>> face_embeddings;
     double fps;
+    bool skip_detection;
 };
 
 class FaceDetector {
@@ -33,8 +34,8 @@ public:
                 std::vector<cv::Rect> &rects,
                 std::vector<std::string> &label_encodings,
                 std::vector<matrix<float,0,1>> &face_embeddings,
-                double &fps
-    );
+                double &fps,
+                const bool &skip_detection);
 
     void ClassifyFaces(
                 cv::Mat &origin_cpu,
@@ -42,7 +43,15 @@ public:
                 std::vector<cv::Rect> &rects,
                 std::vector<std::string> &label_encodings,
                 std::vector<matrix<float,0,1>> &face_embeddings,
-                double &fps);
+                double &fps,
+                const bool &skip_detection);
+
+    void setVerifyDetection(const bool &value);
+    bool verifyDetection(const int &frame_number,
+                std::vector<cv::Rect> &rects,
+                std::vector<std::string> &label_encodings,
+                std::vector<double> &face_labels);
+    void writeVerifyResult();
 
 private:
     static FaceDetector *m_Instance;
@@ -55,6 +64,14 @@ private:
     face_embedder &m_embedder;                         // deserialize recognition network
     face_classifier &m_classifier;          // train OR deserialize classification SVM's
     mtcnn &m_finder;
+
+    std::vector<double> face_labels;
+
+    bool veryfy_detection;
+
+    unsigned int not_found_count;
+    unsigned int wrong_found_count;
+    unsigned int total_expected_count;
 
     FaceDetector(face_embedder &embedder, face_classifier &classifier, mtcnn &finder);
 };
