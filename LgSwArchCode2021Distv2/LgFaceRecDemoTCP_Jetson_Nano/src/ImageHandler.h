@@ -25,7 +25,7 @@ public:
 
     static ImageHandler *GetInstance();
 
-    int Initialize(int argc, char *argv[]);
+    int Initialize(int argc, char *argv[], bool usecamera);
 
     bool IsNotStreaming();
     float* GetImageData();

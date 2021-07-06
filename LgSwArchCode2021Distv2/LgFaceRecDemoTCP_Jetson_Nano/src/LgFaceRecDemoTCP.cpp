@@ -25,6 +25,8 @@
 #include "NetworkTCP.h"
 #include "TcpSendRecvJpeg.h"
 
+#define FEATURE_INTERPOLATE_FACES
+
 #include "ImageHandler.h"
 #include "NetworkInterface.h"
 #include "PerformanceLogger.h"
@@ -41,6 +43,15 @@
 int camera_face_recognition(int argc, char *argv[])
   {
    short              listen_port;
+#ifdef FEATURE_INTERPOLATE_FACES
+   bool               skipframes_cfg=false;
+   int              skipcount_cfg=3; // [0% ~ 100%], setting. 0 = Without skip , 100 = skip all the frames
+   int		skipcount_curr=0; // current count, need to compare with the setting
+   bool     skipframe_curr=0;
+   std::vector<matrix<float,0,1>>  face_embeddings_interpolated;
+   std::vector<cv::Rect> rects_interpolated;
+   bool usecamera = false;
+#endif /* FEATURE_INTERPOLATE_FACES */
 
     face_embedder embedder;                         // deserialize recognition network
     face_classifier classifier(&embedder);          // train OR deserialize classification SVM's
@@ -58,6 +69,48 @@ int camera_face_recognition(int argc, char *argv[])
     }
 
     listen_port = atoi(argv[1]);
+
+
+#ifdef FEATURE_INTERPOLATE_FACES
+	fprintf(stderr,"====================================================== \n");
+	fprintf(stderr,"usage %s [i=3] [l] [v] [c]\n", argv[0]);
+	fprintf(stderr,"i=3 	the number of interpolated frames	\n");
+	fprintf(stderr,"l 		enable learning mode	\n");
+	fprintf(stderr,"c		intentionally enable camera  \n");
+	fprintf(stderr,"v		intentionally enable video	\n");
+	fprintf(stderr,"====================================================== \n");	
+	for(int i=1 ; i<argc ; i++) {
+		//printf("argv[%d] = %s \n", i, argv[i]);
+		if(argv[i][0] == 'i')
+		{
+			skipframes_cfg=true;
+			skipcount_cfg =atoi(&argv[i][1]);
+			printf("enable face interpolation, interpolate %d frames \n", skipcount_cfg );
+		}
+
+		if(argv[i][0] == 'l')
+		{
+			skipframes_cfg=true;
+			skipcount_cfg = 0;
+			printf("enable learning mode \n" );
+		}
+
+		if(argv[i][0] == 'c')
+		{
+			usecamera = true;
+			printf("intentionally enable camera \n");
+		}
+
+		if(argv[i][0] == 'v')
+		{
+			usecamera = false;
+			printf("intentionally enable video \n");
+		}
+	}
+#endif /* FEATURE_INTERPOLATE_FACES */
+
+
+    ImageHandler::GetInstance()->Initialize(argc, argv, usecamera);
 
     imgWidth = ImageHandler::GetInstance()->GetImageWidth();
     imgHeight = ImageHandler::GetInstance()->GetImageHeight();
@@ -142,44 +195,80 @@ int camera_face_recognition(int argc, char *argv[])
 
         PerformanceLogger::GetInstance()->setStartTimeFaceFinder();
 
-        // pass the image to the MTCNN and get face detections
-        std::vector<struct Bbox> detections;
-        finder.findFace(imgRGB_gpu, &detections);
+
+#ifdef FEATURE_INTERPOLATE_FACES
+		if(skipframes_cfg == true) 
+		{
+			skipcount_curr++;
+			if(skipcount_curr%skipcount_cfg == 0) 
+			{
+				skipcount_curr=0;
+				skipframe_curr=false;
+			}
+			else skipframe_curr=true;
+		}
+		else // skipframes_cfg == false
+		{
+			skipframe_curr=false;
+		}
+
+		if(skipframe_curr == false)
+		{
+#endif /* FEATURE_INTERPOLATE_FACES */
+
+	        // pass the image to the MTCNN and get face detections
+	        std::vector<struct Bbox> detections;
+	        finder.findFace(imgRGB_gpu, &detections);
 
 
-        // check if faces were detected, get face locations, bounding boxes and keypoints
-        std::vector<cv::Rect> rects;
-        std::vector<float*> keypoints;
-        num_dets = get_detections(origin_cpu, &detections, &rects, &keypoints);
+	        // check if faces were detected, get face locations, bounding boxes and keypoints
+	        std::vector<cv::Rect> rects;
+	        std::vector<float*> keypoints;
+	        num_dets = get_detections(origin_cpu, &detections, &rects, &keypoints);
 
-        PerformanceLogger::GetInstance()->setEndTimeFaceFinder();
+	        PerformanceLogger::GetInstance()->setEndTimeFaceFinder();
 
-        // if faces detected
-        if(num_dets > 0){
+	        // if faces detected
+	        if(num_dets > 0){
 
-            PerformanceLogger::GetInstance()->setStartTimeCropEmbedding();
+	            PerformanceLogger::GetInstance()->setStartTimeCropEmbedding();
 
-            // crop and align the faces. Get faces to format for "dlib_face_recognition_model" to create embeddings
-            std::vector<matrix<rgb_pixel>> faces;
-            crop_and_align_faces(imgRGB_gpu, cropped_buffer_gpu, cropped_buffer_cpu, &rects, &faces, &keypoints);
+	            // crop and align the faces. Get faces to format for "dlib_face_recognition_model" to create embeddings
+	            std::vector<matrix<rgb_pixel>> faces;
+	            crop_and_align_faces(imgRGB_gpu, cropped_buffer_gpu, cropped_buffer_cpu, &rects, &faces, &keypoints);
 
-            // generate face embeddings from the cropped faces and store them in a vector
-            std::vector<matrix<float,0,1>> face_embeddings;
+	            // generate face embeddings from the cropped faces and store them in a vector
+	            std::vector<matrix<float,0,1>> face_embeddings;
 
-            embedder.embeddings(&faces, &face_embeddings);
+	            embedder.embeddings(&faces, &face_embeddings);
 
-            PerformanceLogger::GetInstance()->setEndTimeCropEmbedding();
+	            PerformanceLogger::GetInstance()->setEndTimeCropEmbedding();
 
-            FaceDetector::GetInstance()->PushClassifyFaces(origin_cpu, num_dets, rects, label_encodings, face_embeddings, fps);
-        }
-        else {
-            std::vector<matrix<float,0,1>> face_embeddings;
+	            FaceDetector::GetInstance()->PushClassifyFaces(origin_cpu, num_dets, rects, label_encodings, face_embeddings, fps);
+#ifdef FEATURE_INTERPOLATE_FACES
+				rects_interpolated.clear();
+				rects_interpolated.assign(rects.begin(), rects.end());
 
-            FaceDetector::GetInstance()->PushClassifyFaces(origin_cpu, num_dets, rects, label_encodings, face_embeddings, fps);
-            //FaceDetector::GetInstance()->ClassifyFaces(origin_cpu, num_dets, rects, label_encodings, face_embeddings, fps);
-        }
-        
-        // smooth FPS to make it readable
+				face_embeddings_interpolated.clear();
+				face_embeddings_interpolated.assign(face_embeddings.begin(), face_embeddings.end());
+#endif /* FEATURE_INTERPOLATE_FACES */
+	        }
+	        else {
+	            std::vector<matrix<float,0,1>> face_embeddings;
+
+	            FaceDetector::GetInstance()->PushClassifyFaces(origin_cpu, num_dets, rects, label_encodings, face_embeddings, fps);
+	            //FaceDetector::GetInstance()->ClassifyFaces(origin_cpu, num_dets, rects, label_encodings, face_embeddings, fps);
+	        }
+		}
+
+#ifdef FEATURE_INTERPOLATE_FACES
+	if(skipframes_cfg == true || (num_dets > 0 && skipframe_curr == true))
+	{
+		FaceDetector::GetInstance()->PushClassifyFaces(origin_cpu, num_dets, rects_interpolated, label_encodings, face_embeddings_interpolated, fps);
+	}
+#endif /* FEATURE_INTERPOLATE_FACES */
+
+	// smooth FPS to make it readable	
 	now = clock();
 	    fpsCurr = (1 / ((double)(now-clk)/CLOCKS_PER_SEC));
         fps = (0.90 * fps) + (0.1 * fpsCurr);
@@ -347,9 +436,6 @@ int main(int argc, char *argv[])
     {
         printf("setpriorty err:%d\n", errno);
     }
-
-    ImageHandler::GetInstance()->Initialize(argc, argv);
-
 
     state = camera_face_recognition( argc, argv );
 

@@ -1,1 +1,1 @@
-./LgFaceRecDemoTCP 5000
+./LgFaceRecDemoTCP 5000 i3 c
