@@ -10,5 +10,6 @@ CAM_SSH_PORT:   "22"
 CAM_TRAIN_DATA_PATH: "faces" 
 CAM_TRAIN_DATASET_PATH: "faces/train/datasets/bbt" 
 # Commands
+CAM_LEARNING_MODE_CMD: "bg_LearningMode.sh"
 CAM_TRAIN_CMD: "bg_train.sh" 
 CAM_TEST_RUN_CMD: "bg_DemoWithVideo.sh"

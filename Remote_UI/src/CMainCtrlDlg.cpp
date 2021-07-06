@@ -91,7 +91,7 @@ int CmdThread(CMainCtrlDlg* pDlg, std::vector<std::string> vecCmdList) {
     strTxt.clear();
     strTxt = strCmd;
     strTxt +="\n";
-    pDlg->SetTxt(strTxt);
+    //pDlg->SetTxt(strTxt);
     iRet = DoRemoteCmd(strCmd);
     if (iRet) {
       printf("\033[1;31m[%s][%d] :x: Error on [%s] \033[m\n",
@@ -115,18 +115,21 @@ CMainCtrlDlg::CMainCtrlDlg(QWidget *parent)
   };
   g_pThrCmd = new std::thread(CmdThread,this,vecCmdList);
 
+  m_pLayoutMain = new QGridLayout;
+
   m_pLayoutTxt = new QGridLayout;
   // :x: Create Grid Layout and put the buttons on the grid
-  m_pLayoutGrid = new QGridLayout;
-
-  m_pBtnA    = new QPushButton("Run Mode",this);
-  connect(m_pBtnA,    SIGNAL (released()), this, SLOT (handleRun()));
+  m_pLayoutBtnGrid = new QGridLayout;
+  m_pBtnLearningMode = new QPushButton("Learning Mode",this);
+  connect(m_pBtnLearningMode,    SIGNAL (released()), this, SLOT (handleLearningMode()));
+  m_pBtnRun    = new QPushButton("Run Mode",this);
+  connect(m_pBtnRun,    SIGNAL (released()), this, SLOT (handleRun()));
   m_pBtnTestRun    = new QPushButton("Test Run Mode",this);
   connect(m_pBtnTestRun,    SIGNAL (released()), this, SLOT (handleBtnTestRun()));
-  m_pBtnC    = new QPushButton("Rescan",this);
-  connect(m_pBtnC,    SIGNAL (released()), this, SLOT (handleBtnRescan()));
-  m_pBtnD    = new QPushButton("Add Data",this);
-  connect(m_pBtnD,    SIGNAL (released()), this, SLOT (handleAddData()));
+  m_pBtnRescan    = new QPushButton("Rescan",this);
+  connect(m_pBtnRescan,    SIGNAL (released()), this, SLOT (handleBtnRescan()));
+  m_pBtnAddData    = new QPushButton("Add Data",this);
+  connect(m_pBtnAddData,    SIGNAL (released()), this, SLOT (handleAddData()));
   m_pBtnExit = new QPushButton("Exit",this);
   connect(m_pBtnExit, SIGNAL (released()), this, SLOT (handleBtnExit()));
 
@@ -136,34 +139,92 @@ CMainCtrlDlg::CMainCtrlDlg(QWidget *parent)
   m_pTxtEdit00 = new QTextEdit("Surveillance status\n",this);
   m_pTxtEdit00->setFont(QFont("",7));
   m_pLayoutTxt->addWidget(m_pTxtEdit00);
-  
-  m_pLayoutGrid->addWidget(m_pTxtEdit00 ,0,2);
-  m_pLayoutGrid->addWidget(m_pBtnA    ,1,0);
-  m_pLayoutGrid->addWidget(m_pBtnTestRun    ,1,1);
-  m_pLayoutGrid->addWidget(m_pBtnC    ,2,0);
-  m_pLayoutGrid->addWidget(m_pBtnD    ,2,1);
-  m_pLayoutGrid->addWidget(m_pBtnExit ,3,0);
 
-  m_pLayoutGrid->setColumnStretch(1, 10);
-  m_pLayoutGrid->setColumnStretch(2, 20);
+  m_pLayoutBtnGrid->addWidget(m_pBtnLearningMode  ,0,0);
+  m_pLayoutBtnGrid->addWidget(m_pBtnRun           ,0,1);
+  m_pLayoutBtnGrid->addWidget(m_pBtnTestRun       ,1,0);
+  m_pLayoutBtnGrid->addWidget(m_pBtnRescan        ,1,1);
+  m_pLayoutBtnGrid->addWidget(m_pBtnAddData       ,2,0);
+  m_pLayoutBtnGrid->addWidget(m_pBtnExit          ,2,1);
 
-  setLayout(m_pLayoutGrid);
+  m_pLayoutBtnGrid->setColumnStretch(1, 10);
+  m_pLayoutBtnGrid->setColumnStretch(2, 20);
+
+  m_pLayoutMain->addLayout(m_pLayoutTxt,0,0);
+  m_pLayoutMain->addLayout(m_pLayoutBtnGrid,1,0);
+  setLayout(m_pLayoutMain);
 }
 
 
 
 CMainCtrlDlg::~CMainCtrlDlg(){
   delete m_pLayoutTxt;
-  delete m_pLayoutGrid;
-  delete m_pBtnA;
+  delete m_pLayoutBtnGrid;
+  delete m_pLayoutMain;
+  delete m_pBtnLearningMode;
+  delete m_pBtnRun;
   delete m_pBtnTestRun;
-  delete m_pBtnC;
-  delete m_pBtnD;
+  delete m_pBtnRescan;
+  delete m_pBtnAddData;
   delete m_pBtnExit;
   delete m_pTxtEdit00;
   
   printf("\033[1;33m[%s][%d] :x: Clean out the pointers \033[m\n",
       __FUNCTION__,__LINE__);
+
+}
+void CMainCtrlDlg::handleLearningMode() {
+
+  bool bOk;
+  static std::string strDefaultName = QDir::home().dirName().toStdString();
+  static int iNumOfSample = 3;
+  QString text = QInputDialog::getText(this, tr("Input the name of IOI"),
+      tr("User name:"), QLineEdit::Normal,
+      strDefaultName.c_str(), &bOk);
+  
+  std::string strIOI = text.toStdString();
+  if (!bOk || strIOI.empty() ) {
+    printf("\033[1;36m[%s][%d] :x: No Input \033[m\n",__FUNCTION__,__LINE__);
+    return;
+  }
+  if (bOk && !strIOI.empty()) {
+    printf("\033[1;36m[%s][%d] :x: IOI is [%s] \033[m\n",__FUNCTION__,__LINE__,
+        strIOI.c_str());
+  }
+
+  strDefaultName = strIOI;
+
+  bool bIsNumber;
+  text = QInputDialog::getText(this, tr("samples"),
+      tr("number of sample :"), QLineEdit::Normal,
+      std::to_string(iNumOfSample).c_str(), &bOk);
+ 
+
+  iNumOfSample = text.toInt(&bIsNumber);
+
+  if (!bOk || iNumOfSample <= 0 || !bIsNumber ) {
+    printf("\033[1;36m[%s][%d] :x: No Input \033[m\n",__FUNCTION__,__LINE__);
+    return;
+  }
+
+
+  printf("\033[1;33m[%s][%d] :x: clear all process & Run\033[m\n",
+      __FUNCTION__,__LINE__);
+
+  std::vector<std::string> vecCmdList = {
+    m_strCmdClearLgFaceRecDemo,
+    m_strCmdLearn
+  };
+  g_pThrCmd = new std::thread(CmdThread,this,vecCmdList);
+
+  m_pRunModeDlg = new CRunModeDlg(MODE_LEARNING);
+  m_pRunModeDlg->m_iNumberOfSample = iNumOfSample; 
+  m_pRunModeDlg->m_strIOI = strIOI; 
+  std::string strTitle = std::string("Learning Mode - ") + strIOI; 
+  m_pRunModeDlg->setWindowTitle(strTitle.c_str());
+  m_pRunModeDlg->setModal(true);
+  m_pRunModeDlg->showNormal();
+
 
 }
 
@@ -178,27 +239,24 @@ void CMainCtrlDlg::handleRun(){
   };
   g_pThrCmd = new std::thread(CmdThread,this,vecCmdList);
 
-  m_pRunModeDlg = new CRunModeDlg();
-  m_pRunModeDlg->SetMode(MODE_CAM);
+  m_pRunModeDlg = new CRunModeDlg(MODE_CAM);
   m_pRunModeDlg->setWindowTitle("Run Mode");
   m_pRunModeDlg->setModal(true);
   m_pRunModeDlg->showNormal();
 }
+
 void CMainCtrlDlg::handleBtnTestRun(){
   printf("\033[1;33m[%s][%d] :x: Btn Event \033[m\n",__FUNCTION__,__LINE__);
 
   printf("\033[1;33m[%s][%d] :x: clear all process \033[m\n",
       __FUNCTION__,__LINE__);
-
-
   std::vector<std::string> vecCmdList = {
     m_strCmdClearLgFaceRecDemo,
     m_strCmdTestRun
   };
   g_pThrCmd = new std::thread(CmdThread,this,vecCmdList);
 
-  m_pRunModeDlg = new CRunModeDlg();
-  m_pRunModeDlg->SetMode(MODE_TESTRUN);
+  m_pRunModeDlg = new CRunModeDlg(MODE_TESTRUN);
   m_pRunModeDlg->setWindowTitle("Test Run Mode");
   m_pRunModeDlg->setModal(true);
   m_pRunModeDlg->showNormal();
@@ -233,7 +291,7 @@ void CMainCtrlDlg::handleAddData(){
   char szDefaultPath[512] ={};
   getcwd(szDefaultPath,sizeof(szDefaultPath));
   QString fileName = QFileDialog::getOpenFileName(this,
-    tr("Open Image"), szDefaultPath, tr("Image Files (*.png *.jpg *.bmp)"));
+      tr("Open Image"), szDefaultPath, tr("Image Files (*.png *.jpg *.bmp)"));
   std::string strFileName = fileName.toStdString();
   if (!strFileName.empty()) {
     printf("\033[1;32m[%s][%d] :x: The File Name is [%s] \033[m\n",
@@ -241,8 +299,8 @@ void CMainCtrlDlg::handleAddData(){
   }
   else
   {
-printf("\033[1;33m[%s][%d] :x: No Input \033[m\n",__FUNCTION__,__LINE__);
-return;
+    printf("\033[1;33m[%s][%d] :x: No Input \033[m\n",__FUNCTION__,__LINE__);
+    return;
 
   }
 
@@ -254,9 +312,6 @@ return;
 
   g_pThrDataAddSequence = 
     new std::thread(Hwnd_DataAddSequence,this,strIOI,strFileName);
-
-
-  
 }
 void CMainCtrlDlg::handleBtnExit(){
   printf("\033[1;33m[%s][%d] :x: Btn Event \033[m\n",__FUNCTION__,__LINE__);
@@ -280,6 +335,14 @@ void CMainCtrlDlg::Create_commands() {
     g_Config["CAM_PATH"].as<std::string>() +
     std::string("/")+
     g_Config["CAM_RUN_CMD"].as<std::string>();
+
+  // :x: the command for Learning mode 
+  m_strCmdLearn =  
+    g_Config["CAM_PATH"].as<std::string>() +
+    std::string("/")+
+    g_Config["CAM_LEARNING_MODE_CMD"].as<std::string>();
+
+
 
   // :x: the command for running test run mode
   m_strCmdTestRun =  
