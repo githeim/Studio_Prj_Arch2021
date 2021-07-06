@@ -165,7 +165,7 @@ ImageHandler *ImageHandler::m_Instance = nullptr;
 ImageHandler::ImageHandler()
 {
     m_gstCamera = nullptr;
-//    m_videoStream = nullptr;
+    m_videoStream = nullptr;
     m_ImgWidth = 0;
     m_ImgHeight = 0;
     FrameCount = 0;
@@ -220,35 +220,34 @@ int ImageHandler::Initialize(int argc, char *argv[], bool usecamera)
     else
     {
         printf("video:%s\n", filename);
-#if 1
-        if (!OpenMotionJpegFile(&MotionJpegFd, filename, &m_ImgWidth, &m_ImgHeight))
-          {
-            printf("ERROR! Unable to open file %s\n", filename);
-            return -1;
-          }
-
-
-#else
-        m_videoStream = videoSource::Create(argc, argv, 1);
-        if( !m_videoStream )
-        {
-            printf("load video failed\n");
-            return -1;
+        if (strstr(filename, ".mp4")) {
+            m_videoStream = videoSource::Create(argc, argv, 1);
+            if( !m_videoStream )
+            {
+                printf("load video failed\n");
+                return -1;
+            }
+            else
+            {
+                m_ImgWidth = m_videoStream->GetWidth();
+                m_ImgHeight = m_videoStream->GetHeight();
+                return 0;
+            }
+        } else if (strstr(filename, ".smjpeg")) {
+            if (!OpenMotionJpegFile(&MotionJpegFd, filename, &m_ImgWidth, &m_ImgHeight))
+              {
+                printf("ERROR! Unable to open file %s\n", filename);
+                return -1;
+              }
+        } else {
+            printf("ERROR! Unknown file format:%s\n", filename);
         }
-        else
-        {
-            m_ImgWidth = m_videoStream->GetWidth();
-            m_ImgHeight = m_videoStream->GetHeight();
-            return 0;
-        }
-#endif
     }
 }
 
 bool ImageHandler::IsNotStreaming()
 {
-//    return ((m_videoStream) && (!m_videoStream->IsStreaming()));
-    return false;
+    return ((m_videoStream) && (!m_videoStream->IsStreaming()));
 }
 
 float* ImageHandler::GetImageData()
@@ -264,17 +263,18 @@ float* ImageHandler::GetImageData()
             fprintf(stderr, "failed to capture RGBA image from camera\n");
         }
     }
-    else if (MotionJpegFd.inputImgGPU != nullptr)
+    else if (m_videoStream != nullptr)
     {
-#if 1    
-        if (!LoadMotionJpegFrame(&MotionJpegFd, (float4**)&imgOrigin)) printf("Load Failed\n");
-        FrameCount++;
-#else
         if (!m_videoStream->Capture((float4**)&imgOrigin, 1000))
         {
             fprintf(stderr, "failed to capture RGBA image from video\n");
         }
-#endif
+    }
+    else if (MotionJpegFd.inputImgGPU != nullptr)
+    {
+        if (!LoadMotionJpegFrame(&MotionJpegFd, (float4**)&imgOrigin))
+            printf("Load Failed\n");
+        FrameCount++;
     }
     else
     {
