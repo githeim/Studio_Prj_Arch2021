@@ -11,8 +11,18 @@
 #include <opencv2/core/core.hpp>
 #include "NetworkTCP.h"
 
+struct DetectionInfo {
+    int x;
+    int y;
+    int w;
+    int h;
+    int category;
+    std::string label;
+};
+
 int TcpSendImageAsJpeg(TTcpConnectedPort * TcpConnectedPort, cv::Mat Image);
 bool TcpRecvImageAsJpeg(TTcpConnectedPort * TcpConnectedPort,cv::Mat *Image);
+bool TcpRecvDetectionInfo(TTcpConnectedPort* TcpConnectedPort, std::vector<DetectionInfo> &result);
 
 #endif
 //------------------------------------------------------------------------------------------------
