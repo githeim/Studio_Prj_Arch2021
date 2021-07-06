@@ -51,7 +51,8 @@ void FaceDetector::PushClassifyFaces(
             std::vector<cv::Rect> &rects,
             std::vector<std::string> &label_encodings,
             std::vector<matrix<float,0,1>> &face_embeddings,
-            double &fps
+            double &fps,
+            const bool &skip_detection
 ) {
     std::shared_ptr<ClassifyData> data = std::make_shared<ClassifyData>();
     data->origin_cpu = origin_cpu.clone();
@@ -60,6 +61,7 @@ void FaceDetector::PushClassifyFaces(
     data->label_encodings = label_encodings;
     data->face_embeddings = face_embeddings;
     data->fps = fps;
+    data->skip_detection = skip_detection;
     
     g_mtxClassify.lock();
 
@@ -87,7 +89,7 @@ void FaceDetector::Hwnd_Classifier(    ) {
             g_listClassify.pop_front();
         }
 
-        ClassifyFaces(data->origin_cpu, data->num_dets, data->rects, data->label_encodings, data->face_embeddings, data->fps);
+        ClassifyFaces(data->origin_cpu, data->num_dets, data->rects, data->label_encodings, data->face_embeddings, data->fps, data->skip_detection);
     }
 
     printf("\033[1;33m[%s][%d] :x: Thread End \033[m\n",__FUNCTION__,__LINE__);
@@ -100,14 +102,18 @@ void FaceDetector::ClassifyFaces(
         std::vector<cv::Rect> &rects,
         std::vector<std::string> &label_encodings,
         std::vector<matrix<float,0,1>> &face_embeddings,
-        double &fps)
+        double &fps,
+        const bool &skip_detection)
 {
-    if(num_dets > 0) {
+    if (skip_detection) {
+        // draw bounding boxes and labels to the original image
+        draw_detections(origin_cpu, &rects, &face_labels, &label_encodings);
+    } else if (num_dets > 0) {
+        face_labels.clear();
 
         PerformanceLogger::GetInstance()->setStartTimeClassifier();
 
         // feed the embeddings to the pretrained SVM's. Store the predicted labels in a vector
-        std::vector<double> face_labels;
 
         m_classifier.prediction(&face_embeddings, &face_labels);
 
@@ -119,6 +125,8 @@ void FaceDetector::ClassifyFaces(
         draw_detections(origin_cpu, &rects, &face_labels, &label_encodings);
 
         PerformanceLogger::GetInstance()->setEndTimeDrawDetection();
+    } else {
+        face_labels.clear();
     }
     
     char str[256];
