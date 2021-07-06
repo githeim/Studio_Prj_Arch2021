@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
             double fps = 1000.0 / milliseconds.count();
             totalFps += fps;
             frameCount++;
-            avrageFps = totalFps / frameCount;
+            avrageFps = avrageFps * 0.9 + fps * 0.1;
 
             char str[256];
             sprintf_s(str, "Frame %d  Rate:%.1lf FPS", frameCount, avrageFps);               // print the FPS to the bar
