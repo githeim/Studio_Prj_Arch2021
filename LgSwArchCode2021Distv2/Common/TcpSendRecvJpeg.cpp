@@ -234,8 +234,6 @@ void parseJsonValues(const std::string& data, std::vector<DetectionInfo>& result
     data_stream >> value;
 
     count = stringToInt(value["dts"].asCString());
-    std::cout << "fno:" << value["fno"] << std::endl;
-    std::cout << "dts:" << count << std::endl;
 
     for (int i = 0; i < count; ++i) {
         std::string key = std::to_string(i);
