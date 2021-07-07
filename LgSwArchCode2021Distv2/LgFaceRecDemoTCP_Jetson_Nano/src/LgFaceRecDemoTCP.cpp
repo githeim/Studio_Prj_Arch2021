@@ -56,8 +56,8 @@ int camera_face_recognition(int argc, char *argv[])
     int frame_count = 0;
     int current_queue_count;
     int scan_interval;
-    std::chrono::system_clock::time_point prev_time;
-    std::chrono::system_clock::time_point current_time = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point prev_time = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point current_time;
 
     face_embedder embedder;                         // deserialize recognition network
     face_classifier classifier(&embedder);          // train OR deserialize classification SVM's
@@ -167,13 +167,13 @@ int camera_face_recognition(int argc, char *argv[])
 // ------------------ "Detection" Loop -----------------------
     while(!user_quit){
         current_queue_count = NetworkInterface::GetInstance()->GetCurrentTransmitQueueSize();
-        prev_time = current_time;
         current_time = std::chrono::system_clock::now();
         auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - prev_time);
-        scan_interval = 60 + (current_queue_count * 10);
-        if (milliseconds.count() < scan_interval) {
+        scan_interval = 50 + ((current_queue_count - 1) * 30);
+        if ((current_queue_count > 0 ) && (milliseconds.count() < scan_interval)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(scan_interval - milliseconds.count()));
         }
+        prev_time = std::chrono::system_clock::now();
 
 	float* imgOrigin = NULL;    // camera image
 
@@ -189,7 +189,7 @@ int camera_face_recognition(int argc, char *argv[])
 
         PerformanceLogger::GetInstance()->setEndTimeCapture();
 
-        printf("capture image\n");
+        printf("capture image interval:%d\n", scan_interval);
 
         PerformanceLogger::GetInstance()->setStartTimeImgXcoding();
 
