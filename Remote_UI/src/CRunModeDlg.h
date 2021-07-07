@@ -67,7 +67,7 @@ public:
 
 private slots:
   // :x: button handlers should be in the 'slots'
-  void handleTestRun();
+  void handleConnect();
   void handleBtnExit();
   void handleShutter();
 private:
