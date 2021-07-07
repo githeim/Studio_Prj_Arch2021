@@ -132,7 +132,7 @@ void runJpegEncoding()
 
 void runNetworkInterface()
 {
-    NetworkInterface::GetInstance()->Hwnd_Transmit();
+    NetworkInterface::GetInstance()->Hwnd_TransmitImage();
 }
 
 void runSendDetectionData() {
@@ -189,7 +189,11 @@ int NetworkInterface::Initialize(short listen_port)
     g_bTranmitRunFlag = true;
     g_pThrTransmit = std::thread(runNetworkInterface);
 
+    pthread_setname_np(g_pThrTransmit.native_handle(), "TransImage");
+
     g_pThrJpegEncoding = std::thread(runJpegEncoding);
+
+    pthread_setname_np(g_pThrJpegEncoding.native_handle(), "JpegEncoder");
 
     if ((TcpListenPort2 = OpenTcpListenPort(6000)) ==  NULL)  // Open TCP Network port
     {
@@ -204,6 +208,8 @@ int NetworkInterface::Initialize(short listen_port)
     }
 
     g_pThrTransmitDetectionData = std::thread(runSendDetectionData);
+
+    pthread_setname_np(g_pThrTransmitDetectionData.native_handle(), "TransDetectionInfo");
 
     printf("\033[1;33m[%s][%d] :x: Start \033[m\n",__FUNCTION__,__LINE__);
 }
@@ -268,6 +274,8 @@ void NetworkInterface::Hwnd_JpegEncoding(    ) {
         end = clock();
 
 //        printf("encoding time:%lu ms  encrypt:%lu ms  jpeg size:%lu  encrypt size:%d\n", 1000*(encrypt-begin)/CLOCKS_PER_SEC, 1000*(end-encrypt)/CLOCKS_PER_SEC, jpegData.sendbuff.size(), jpegData.encrypted_len);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
     CloseTcpListenPort(&TcpListenPort);  // Close listen port
@@ -278,7 +286,7 @@ void NetworkInterface::Hwnd_JpegEncoding(    ) {
 
 void NetworkInterface::EncodeJPEG(cv::Mat &data)
 {
-    static  int init_values[2] = { cv::IMWRITE_JPEG_QUALITY, 80 };
+    static  int init_values[2] = { cv::IMWRITE_JPEG_QUALITY, 30 };
     std::vector<int> param (&init_values[0], &init_values[0]+2);
     JpegEncodedData  jpegData;
 
@@ -298,7 +306,7 @@ void NetworkInterface::EncodeJPEG(cv::Mat &data)
     PerformanceLogger::GetInstance()->setEndTimeEncodingJPEG();
 }
 
-void NetworkInterface::Hwnd_Transmit(    ) {
+void NetworkInterface::Hwnd_TransmitImage(    ) {
     unsigned int imagesize;
     ssize_t sent_size;
     clock_t begin;
@@ -327,7 +335,7 @@ void NetworkInterface::Hwnd_Transmit(    ) {
         PerformanceLogger::GetInstance()->setStartTimeSendImg_TCP();
 
         begin = clock();
-        sent_size = SendData(data);
+        sent_size = SendImageData(data);
         end = clock();
 
         PerformanceLogger::GetInstance()->setEndTimeSendImg_TCP();
@@ -345,7 +353,7 @@ void NetworkInterface::Hwnd_Transmit(    ) {
 
 }
 
-ssize_t NetworkInterface::SendData(JpegEncodedData &data)
+ssize_t NetworkInterface::SendImageData(JpegEncodedData &data)
 {
     unsigned int imagesize;
     ssize_t sent_size;
@@ -468,7 +476,6 @@ ssize_t NetworkInterface::SendDetectionData(
     return sent_size;
 #else
 
-    unsigned int sendbuffsize;
     return WriteDataTcp(TcpConnectedPort2, sendbuff.data(), sendbuff.size());
 #endif
 }
