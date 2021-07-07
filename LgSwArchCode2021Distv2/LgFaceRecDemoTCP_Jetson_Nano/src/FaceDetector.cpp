@@ -78,6 +78,8 @@ int FaceDetector::Initialize()
 
     g_pThrClassify = std::thread(runClassifier);
 
+    pthread_setname_np(g_pThrClassify.native_handle(), "FaceDetector");
+
     return 0;
 }
 
@@ -126,6 +128,8 @@ void FaceDetector::Hwnd_Classifier(    ) {
         }
 
         ClassifyFaces(data->origin_cpu, data->num_dets, data->rects, data->label_encodings, data->face_embeddings, data->fps, data->skip_detection);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     printf("\033[1;33m[%s][%d] :x: Thread End \033[m\n",__FUNCTION__,__LINE__);
