@@ -41,6 +41,7 @@ public:
 
 
   void LoopVideo();
+  void LoopVideoWithJson();
   std::thread *m_pThrVideo;
   std::string m_strIOI = "Default_";
   // :x: the number of capturing 
@@ -67,7 +68,7 @@ public:
 
 private slots:
   // :x: button handlers should be in the 'slots'
-  void handleTestRun();
+  void handleConnect();
   void handleBtnExit();
   void handleShutter();
 private:
