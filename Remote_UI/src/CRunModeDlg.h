@@ -41,6 +41,7 @@ public:
 
 
   void LoopVideo();
+  void LoopVideoWithJson();
   std::thread *m_pThrVideo;
   std::string m_strIOI = "Default_";
   // :x: the number of capturing 
