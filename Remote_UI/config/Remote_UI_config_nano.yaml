@@ -1,5 +1,7 @@
 # jetson-Nano ---------------------
 CAM_IP:      "192.168.0.120"
+CAM_PORT_IMAGE: "5000"
+CAM_PORT_JSON:  "6000"
 CAM_ID:      "lg"
 CAM_PASSWD:  "lg"
 CAM_PATH : "/home/lg/Studio_Prj_Release/Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano"
