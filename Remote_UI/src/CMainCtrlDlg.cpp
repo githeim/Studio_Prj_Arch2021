@@ -176,13 +176,18 @@ CMainCtrlDlg::~CMainCtrlDlg(){
 void CMainCtrlDlg::handleLearningMode() {
 
   bool bOk;
+  // :x: 디폴트 사용자 이름, 리눅스 계정 이름을 디폴트로 사용한다
   static std::string strDefaultName = QDir::home().dirName().toStdString();
+  // :x: 촬영할 사진의 디폴트 개수
   static int iNumOfSample = 3;
+  // :x: 등록할 사용자 이름을 입력 받는다 
   QString text = QInputDialog::getText(this, tr("Input the name of IOI"),
       tr("User name:"), QLineEdit::Normal,
       strDefaultName.c_str(), &bOk);
   
+  // :x: 입력된 IOI 이름에 대한 예외조건 처리
   std::string strIOI = text.toStdString();
+  // :x: 입력 같이 비었거나, Ok 버튼을 누르지 않은경우 (=cancel 누른경우)
   if (!bOk || strIOI.empty() ) {
     printf("\033[1;36m[%s][%d] :x: No Input \033[m\n",__FUNCTION__,__LINE__);
     return;
@@ -194,19 +199,19 @@ void CMainCtrlDlg::handleLearningMode() {
 
   strDefaultName = strIOI;
 
+  // :x: 등록할 사진 샘플의 갯수
   bool bIsNumber;
   text = QInputDialog::getText(this, tr("samples"),
       tr("number of sample :"), QLineEdit::Normal,
       std::to_string(iNumOfSample).c_str(), &bOk);
- 
 
   iNumOfSample = text.toInt(&bIsNumber);
 
+  // :x: 입력한 값에 대한 예외 처리 
   if (!bOk || iNumOfSample <= 0 || !bIsNumber ) {
     printf("\033[1;36m[%s][%d] :x: No Input \033[m\n",__FUNCTION__,__LINE__);
     return;
   }
-
 
   printf("\033[1;33m[%s][%d] :x: clear all process & Run\033[m\n",
       __FUNCTION__,__LINE__);
@@ -217,28 +222,36 @@ void CMainCtrlDlg::handleLearningMode() {
   };
   g_pThrCmd = new std::thread(CmdThread,this,vecCmdList);
 
+  // :x: run mode dialog를 띄운다 - MODE_LEARNING으로 설정
   m_pRunModeDlg = new CRunModeDlg(MODE_LEARNING);
+  // :x: 입력할 IOI와 등록할 샘플 개수 설정
   m_pRunModeDlg->m_iNumberOfSample = iNumOfSample; 
   m_pRunModeDlg->m_strIOI = strIOI; 
+  // :x: 위젯의 타이틀 설정
   std::string strTitle = std::string("Learning Mode - ") + strIOI; 
   m_pRunModeDlg->setWindowTitle(strTitle.c_str());
   m_pRunModeDlg->setModal(true);
   m_pRunModeDlg->showNormal();
 
-
 }
 
+/**
+ * @brief Run mode ; 카메라로 원격 모니터링 및 얼굴인식 수행
+ */
 void CMainCtrlDlg::handleRun(){
   printf("\033[1;33m[%s][%d] :x: Btn Event \033[m\n",__FUNCTION__,__LINE__);
   printf("\033[1;33m[%s][%d] :x: clear all process \033[m\n",
       __FUNCTION__,__LINE__);
 
+  // :x: 기존에 nano에 있던 LgFaceRecDemoTC 를 먼저 pkill 시키고
+  // :x: 원격으로 LgFaceRecDemoTC를 재실행 시킨다
   std::vector<std::string> vecCmdList = {
     m_strCmdClearLgFaceRecDemo,
-    m_strCmdRun
+    m_strCmdRun  // :x: <--- Run mode로 실행
   };
   g_pThrCmd = new std::thread(CmdThread,this,vecCmdList);
 
+  // :x: run mode dialog를 띄운다 - MODE_CAM으로 설정
   m_pRunModeDlg = new CRunModeDlg(MODE_CAM);
   m_pRunModeDlg->setWindowTitle("Run Mode");
   m_pRunModeDlg->setModal(true);
@@ -252,24 +265,36 @@ void CMainCtrlDlg::handleBtnTestRun(){
       __FUNCTION__,__LINE__);
   std::vector<std::string> vecCmdList = {
     m_strCmdClearLgFaceRecDemo,
-    m_strCmdTestRun
+    m_strCmdTestRun  // :x: <--- Test Run mode로 실행
   };
   g_pThrCmd = new std::thread(CmdThread,this,vecCmdList);
 
+  // :x: run mode dialog를 띄운다 - MODE_TESTRUN으로 설정
   m_pRunModeDlg = new CRunModeDlg(MODE_TESTRUN);
   m_pRunModeDlg->setWindowTitle("Test Run Mode");
   m_pRunModeDlg->setModal(true);
   m_pRunModeDlg->showNormal();
 }
+
+
+/**
+ * @brief 원격으로 train.sh를 실행시켜 rescan을 수행한다
+ */
 void CMainCtrlDlg::handleBtnRescan(){
+  // :x: 기존에 실행된 스레드가 있으면 회수
   if (g_pThrRetrainSequence) {
     g_pThrRetrainSequence->join();
     delete g_pThrRetrainSequence;
     g_pThrRetrainSequence = nullptr;
   }
 
+  // :x: retrain sequence 스레드로 동작
   g_pThrRetrainSequence = new std::thread(Hwnd_RetrainSequence,this);
 }
+
+/**
+ * @brief 로컬에 있는 파일을 IOI에 추가하거나 새로운 IOI를 등록한다
+ */
 void CMainCtrlDlg::handleAddData(){
   printf("\033[1;33m[%s][%d] :x: Btn Event \033[m\n",__FUNCTION__,__LINE__);
   bool bOk;
@@ -329,6 +354,9 @@ void CMainCtrlDlg::SetTxt(std::string strVal) {
   emit valueCh(strVal);
 }
 
+/**
+ * @brief 공통으로 사용할 ssh 커맨드를 등록한다
+ */
 void CMainCtrlDlg::Create_commands() {
   // :x: the command for running run mode
   m_strCmdRun =  
