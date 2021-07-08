@@ -13,7 +13,15 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+//#define PERFORMANCE_TEST
+//#define SEPARATE_SEND_DETECTION_INFO_THREAD
+
 #define ENCRYPT_DATA
+
+#ifdef PERFORMANCE_TEST
+int image_count = 0;
+int detection_info_count = 0;
+#endif
 
 #define ENCRYPT_KEY "01234567890123456789012345678901"
 unsigned char *iv = (unsigned char*)"0123456789012345";
@@ -175,6 +183,9 @@ int NetworkInterface::Initialize(short listen_port)
 
     clilen = sizeof(cli_addr);
 
+#ifdef PERFORMANCE_TEST
+    PerformanceLogger::GetInstance()->setStartTime();
+#else
     printf("Listening for connections\n");
 
     if ((TcpConnectedPort = AcceptTcpConnection(TcpListenPort,&cli_addr,&clilen)) == NULL)
@@ -184,6 +195,7 @@ int NetworkInterface::Initialize(short listen_port)
     }
 
     printf("Accepted connection Request\n");
+#endif
 
     // :x: Create Thread
     g_bTranmitRunFlag = true;
@@ -195,6 +207,8 @@ int NetworkInterface::Initialize(short listen_port)
 
     pthread_setname_np(g_pThrJpegEncoding.native_handle(), "JpegEncoder");
 
+#ifdef PERFORMANCE_TEST
+#else
     if ((TcpListenPort2 = OpenTcpListenPort(6000)) ==  NULL)  // Open TCP Network port
     {
         printf("OpenTcpListenPortFailed 2\n");
@@ -206,10 +220,13 @@ int NetworkInterface::Initialize(short listen_port)
         printf("AcceptTcpConnection Failed 2\n");
         return(-1);
     }
+#endif // PERFORMANCE_TEST
 
+#ifdef SEPARATE_SEND_DETECTION_INFO_THREAD
     g_pThrTransmitDetectionData = std::thread(runSendDetectionData);
 
     pthread_setname_np(g_pThrTransmitDetectionData.native_handle(), "TransDetectionInfo");
+#endif // SEPARATE_SEND_DETECTION_INFO_THREAD
 
     printf("\033[1;33m[%s][%d] :x: Start \033[m\n",__FUNCTION__,__LINE__);
 }
@@ -225,7 +242,9 @@ void NetworkInterface::Stop()
     g_mtxMat.unlock();
     g_pThrTransmit.join();
 
+#ifdef SEPARATE_SEND_DETECTION_INFO_THREAD
     g_pThrTransmitDetectionData.join();
+#endif // SEPARATE_SEND_DETECTION_INFO_THREAD
 }
 
 void NetworkInterface::StopWhenEmpty()
@@ -239,7 +258,9 @@ void NetworkInterface::StopWhenEmpty()
     g_mtxMat.unlock();
     g_pThrTransmit.join();
 
+#ifdef SEPARATE_SEND_DETECTION_INFO_THREAD
     g_pThrTransmitDetectionData.join();
+#endif // SEPARATE_SEND_DETECTION_INFO_THREAD
 }
 
 void NetworkInterface::Hwnd_JpegEncoding(    ) {
@@ -358,6 +379,13 @@ ssize_t NetworkInterface::SendImageData(JpegEncodedData &data)
     unsigned int imagesize;
     ssize_t sent_size;
 
+#ifdef PERFORMANCE_TEST
+    image_count++;
+    if (image_count >= 100 && detection_info_count >= 100) {
+        PerformanceLogger::GetInstance()->setEndTime();
+        exit(1);
+    }
+#else
 #ifdef ENCRYPT_DATA
     imagesize = htonl(data.encrypted_len); // convert image size to network format
     if (WriteDataTcp(TcpConnectedPort,(unsigned char *)&imagesize,sizeof(imagesize))!=sizeof(imagesize)) {
@@ -370,6 +398,7 @@ ssize_t NetworkInterface::SendImageData(JpegEncodedData &data)
         printf("Error to send:\n");
     }
     sent_size = WriteDataTcp(TcpConnectedPort, data.sendbuff.data(), data.sendbuff.size());
+#endif
 #endif
 
     return sent_size;
@@ -461,6 +490,13 @@ ssize_t NetworkInterface::SendDetectionData(
     sendbuff.assign(oss_str.begin(), oss_str.end());
     sendbuff.push_back('\n');
 
+#ifdef PERFORMANCE_TEST
+    detection_info_count++;
+    if (image_count >= 100 && detection_info_count >= 100) {
+        PerformanceLogger::GetInstance()->setEndTime();
+        exit(1);
+    }
+#else
 #ifdef ENCRYPT_DATA
     unsigned char * encrypted_data = new unsigned char[sendbuff.size() + EVP_MAX_BLOCK_LENGTH];
     unsigned int encrypted_len = StrEncrypt(sendbuff.data(), sendbuff.size(), encrypted_data);
@@ -478,6 +514,7 @@ ssize_t NetworkInterface::SendDetectionData(
 
     return WriteDataTcp(TcpConnectedPort2, sendbuff.data(), sendbuff.size());
 #endif
+#endif // PERFORMANCE_TEST
 }
 
 size_t NetworkInterface::GetCurrentTransmitQueueSize()
@@ -517,6 +554,7 @@ void NetworkInterface::PushDetectionData(
         std::vector<std::string> &label_encodings,
         std::vector<double> &face_labels)
 {
+#ifdef SEPARATE_SEND_DETECTION_INFO_THREAD
     DetectionData detectionData;
 
     detectionData.frame_count = frame_count;
@@ -533,4 +571,7 @@ void NetworkInterface::PushDetectionData(
 
     g_CondDetectionData.notify_all();
     g_mtxDetectionData.unlock();
+#else
+    SendDetectionData(frame_count, num_dets, rects, label_encodings, face_labels);
+#endif // SEPARATE_SEND_DETECTION_INFO_THREAD
 }
