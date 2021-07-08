@@ -356,6 +356,7 @@ void CRunModeDlg::LoopVideoWithJson() {
   // :x: connect 되면 이미지 data chunk를 받고 화면에 표시한다
   static int cnt = 0;
   Mat Image;
+  Mat Image2;
   std::vector<DetectionInfo> infoList;
   bool received;
   std::chrono::system_clock::time_point prev;
@@ -380,7 +381,7 @@ void CRunModeDlg::LoopVideoWithJson() {
         g_ListLock.unlock();
 
         if (GetMode() == MODE_TESTRUN) {
-          cv::cvtColor(Image,Image,COLOR_BGR2RGB);
+          cv::cvtColor(Image,Image2,COLOR_BGR2RGB);
         }
 
         for (size_t i = 0; i < infoList.size(); ++i) {
@@ -395,14 +396,14 @@ void CRunModeDlg::LoopVideoWithJson() {
                 bbox_color = cv::Scalar(255, 0, 0, 255);
             }
             // draw bounding boxes around the face
-            cv::rectangle(Image, rect, bbox_color, 2, 8, 0);
+            cv::rectangle(Image2, rect, bbox_color, 2, 8, 0);
 
             // print label to the bounding box
-            //cv::putText(Image, info.label, cv::Point(info.x, info.y + info.h + 20),
+            //cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
             //    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 255, 255, 255), 3); // mat, text, coord, font, scale, bgr color, line thickness
-            //cv::putText(Image, info.label, cv::Point(info.x, info.y + info.h + 20),
+            //cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
             //    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
-            cv::putText(Image, info.label, cv::Point(info.x, info.y + info.h + 20),
+            cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
                     cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, bbox_color, 2); // mat, text, coord, font, scale, bgr color, line thickness
         }
 
@@ -422,14 +423,14 @@ void CRunModeDlg::LoopVideoWithJson() {
         char str[256];
         sprintf(str, "Frame %d  Rate:%.1lf FPS", cnt, avrageFps);               // print the FPS to the bar
 
-        cv::putText(Image, str, cv::Point(0, 20),
+        cv::putText(Image2, str, cv::Point(0, 20),
             cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 255, 255, 255), 3);
-        cv::putText(Image, str, cv::Point(0, 20),
+        cv::putText(Image2, str, cv::Point(0, 20),
             cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
 
         auto img =
-          QImage((const unsigned char*) Image.data,Image.cols,Image.rows,
-              Image.step,QImage::Format_RGB888);
+          QImage((const unsigned char*) Image2.data,Image2.cols,Image2.rows,
+              Image2.step,QImage::Format_RGB888);
 
         m_pLabel00->setPixmap(QPixmap::fromImage(img));
 
@@ -440,7 +441,7 @@ void CRunModeDlg::LoopVideoWithJson() {
           printf("\033[1;33m[%s][%d] :x: Take Picture \033[m\n",
               __FUNCTION__,__LINE__);
 
-          cv::cvtColor(Image,Image,COLOR_BGR2RGB);
+          cv::cvtColor(Image,Image2,COLOR_BGR2RGB);
           cnt++;
           std::string strFileName;
           // :x: IOI 명과 epoch time tick을 사용해 유니크한 저장 파일명을 만든다
@@ -449,7 +450,7 @@ void CRunModeDlg::LoopVideoWithJson() {
               __FUNCTION__,__LINE__,strFileName.c_str());
 
           // :x: JPEG 파일로 저장한다
-          imwrite(strFileName,Image);
+          imwrite(strFileName,Image2);
 
           // :x: 저장된 파일명은 벡터에 기록해둔다
           m_vecCapturedFiles.push_back(strFileName);
