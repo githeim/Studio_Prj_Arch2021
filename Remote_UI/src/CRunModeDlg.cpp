@@ -6,6 +6,7 @@
 
 #include <unistd.h>
 #include <chrono>
+#include <mutex>
 
 int Hwnd_RetrainSequence(CRunModeDlg* pDlg) {
   DoRemoteCmd(pDlg->m_strCmdClearLgFaceRecDemo);
@@ -25,9 +26,11 @@ CRunModeDlg::CRunModeDlg(int iMode,QWidget *parent)
   SetMode(iMode);
   Create_commands();
   m_vecCapturedFiles.clear();
+  // :x: 메인 레이아웃
   m_pLayoutMain = new QGridLayout;
+  // :x: 영상 디스플레이용 레이아웃
   m_pLayoutDisp = new QGridLayout;
-  // :x: Create Grid Layout and put the buttons on the grid
+  // :x: Create Grid Layout and put the buttons on the grid- 버튼 배치용 레이아웃
   m_pLayoutGrid = new QGridLayout;
 
   // :x: init QImage
@@ -35,12 +38,16 @@ CRunModeDlg::CRunModeDlg(int iMode,QWidget *parent)
   m_pImage00 = new QImage(1280,720,QImage::Format_ARGB32);
   m_pImage00->fill(0xffff00ff);
 
-
+  // :x: 사진 촬영용-capture 버튼 등록
   m_pBtnCapture    = new QPushButton("Capture",this);
   connect(m_pBtnCapture,    SIGNAL (released()), this, SLOT (handleShutter()));
 
+  // :x: nano 접속용 버튼 등록
   m_pBtnConnect    = new QPushButton("Connect",this);
-  connect(m_pBtnConnect,    SIGNAL (released()), this, SLOT (handleTestRun()));
+  connect(m_pBtnConnect,    SIGNAL (released()), this, SLOT (handleConnect()));
+
+  // :x: Learning 모드일 경우 Exit 버튼을 만들지 않는다
+  // :x: 촬영없이 빠져나가는 것 방지를 위하여
   if (GetMode() != MODE_LEARNING) {
     m_pBtnExit = new QPushButton("Exit",this);
     connect(m_pBtnExit, SIGNAL (released()), this, SLOT (handleBtnExit()));
@@ -56,6 +63,7 @@ CRunModeDlg::CRunModeDlg(int iMode,QWidget *parent)
   m_pLayoutGrid->addWidget(m_pBtnConnect    ,0,0);
   m_pLayoutGrid->addWidget(m_pBtnCapture    ,1,0);
 
+  // :x: Learning 모드일 경우 Exit 버튼을 layout에 배치하지 않는다
   if (GetMode() != MODE_LEARNING) {
     m_pLayoutGrid->addWidget(m_pBtnExit       ,2,0);
   }
@@ -85,12 +93,23 @@ CRunModeDlg::~CRunModeDlg(){
 
 }
 
+
+/**
+ * @brief 사진 촬영을 위한 플래그를 올린다
+ */
 void CRunModeDlg::handleShutter() {
   m_bShutter = true;
 }
-void CRunModeDlg::handleTestRun(){
+
+
+/**
+ * @brief connect 버튼 push 대해 nano 접속을 수행하고 접속후 들어오는 영상을
+ *        갱신하여 화면에 출력하는 스레드를 구동한다
+ */
+void CRunModeDlg::handleConnect(){
   printf("\033[1;33m[%s][%d] :x: Btn Event \033[m\n",__FUNCTION__,__LINE__);
-  m_pThrVideo = new std::thread(&CRunModeDlg::LoopVideo, this);
+  //m_pThrVideo = new std::thread(&CRunModeDlg::LoopVideo, this);
+  m_pThrVideo = new std::thread(&CRunModeDlg::LoopVideoWithJson, this);
 }
 
 void CRunModeDlg::handleBtnExit(){
@@ -104,10 +123,13 @@ void CRunModeDlg::handleBtnExit(){
 
 
 /**
- * @brief Get Unique file name through epoch tick
+ * @brief Get Unique file name through epoch tick 
+ *        epoch 틱을 사용해 유니크한 파일명을 만들어낸다, 중복방지용
+ *        예)JOY_16808039.jpg
  *
  * @param strFileName[OUT] the output name from epoch tick & IOI name
- * @param strIOI[IN] the name of IOI
+ *                         생성된 파일명
+ * @param strIOI[IN] the name of IOI , prefix로 붙일 IOI 이름 입력 
  *
  * @return 
  */
@@ -122,8 +144,14 @@ int CRunModeDlg::GetUniqueFileName(std::string& strFileName,
   strFileName = strIOI+std::string("_")+strTick+std::string(".jpg");
   return 0;
 }
+
+/**
+ * @brief nano 접속을 수행하고 접속후 들어오는 영상을
+ *        갱신하여 화면에 출력하는 루프를 구동한다
+ */
 void CRunModeDlg::LoopVideo() {
   TTcpConnectedPort *TcpConnectedPort=NULL;
+  // :x: 접속IP는 config/Remote_UI_config.yaml 파일을 참조
   std::string strIP = g_Config["CAM_IP"].as<std::string>();
 
   std::string strPort ("5000");
@@ -134,6 +162,7 @@ void CRunModeDlg::LoopVideo() {
   int iRetryCount = 0;
   bool bRetvalue;
 
+  // :x: nano 접속을 수행하고 실패하면 재시도를 수행한다
   for (int i =0 ; i < iRetryNumber ; i++ ) 
   {
     iRetryCount++;
@@ -158,6 +187,7 @@ void CRunModeDlg::LoopVideo() {
   }
 
 
+  // :x: connect 되면 이미지 data chunk를 받고 화면에 표시한다
   static int cnt = 0;
   Mat Image;
   while (1) {
@@ -173,7 +203,9 @@ void CRunModeDlg::LoopVideo() {
       m_pLabel00->setPixmap(QPixmap::fromImage(img));
 
     }
+    // :x: shutter는 화면 촬영에 대한 flag
     if (m_bShutter == true) {
+      // :x: 화면 촬영 버튼이 눌렸을 때에 대한 처리
       m_bShutter = false;
       printf("\033[1;33m[%s][%d] :x: Take Picture \033[m\n",
           __FUNCTION__,__LINE__);
@@ -181,19 +213,19 @@ void CRunModeDlg::LoopVideo() {
       cv::cvtColor(Image,Image,COLOR_BGR2RGB);
       cnt++;
       std::string strFileName; 
-      //std::string strFileName = m_strIOI+std::string("_")+
-      //  std::to_string(cnt) +".jpg";
+      // :x: IOI 명과 epoch time tick을 사용해 유니크한 저장 파일명을 만든다
       GetUniqueFileName(strFileName, m_strIOI);
-      printf("\033[1;36m[%s][%d] :x: chk filename =%s \033[m\n",__FUNCTION__,__LINE__,strFileName.c_str());
+      printf("\033[1;36m[%s][%d] :x: chk filename =%s \033[m\n",
+          __FUNCTION__,__LINE__,strFileName.c_str());
 
-
+      // :x: JPEG 파일로 저장한다
       imwrite(strFileName,Image);
-printf("\033[1;33m[%s][%d] :x: chk \033[m\n",__FUNCTION__,__LINE__);
 
+      // :x: 저장된 파일명은 벡터에 기록해둔다
       m_vecCapturedFiles.push_back(strFileName);
 
-      //strFileName = "Test.jpg";
-      //m_pLabel00->setPixmap(QPixmap::fromImage(*m_pImage00));
+      // :x: Leaning 모드일 경우 촬영된 샘플의 개수를 카운트해서 정해진 샘플을
+      // :x: 모두 촬영하면 nano에 사진을 전송하고 종료하는 시퀀스를 수행한다 
       if (GetMode() == MODE_LEARNING) {
         m_iCntofSample++;
         std::string strMsgMain = std::string("Sample to capture ") + 
@@ -206,6 +238,7 @@ printf("\033[1;33m[%s][%d] :x: chk \033[m\n",__FUNCTION__,__LINE__);
         if ( m_iCntofSample == m_iNumberOfSample ) {
           QMessageBox::information(this,"Notice",
               "All Pictures are captured. Now retrain sequence",QMessageBox::Yes);
+          // :x: 정한 숫자만큼 샘플을 얻었으면 전송 시퀀스를 수행한다
           RetrainSequence(m_strIOI,m_vecCapturedFiles);
           break;
         }
@@ -217,10 +250,253 @@ printf("\033[1;33m[%s][%d] :x: chk \033[m\n",__FUNCTION__,__LINE__);
   CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
   handleBtnExit();
 }
+
+/**
+ * @brief nano 접속을 수행하고 접속후 들어오는 영상을
+ *        갱신하여 화면에 출력하는 루프를 구동한다
+ */
+void CRunModeDlg::LoopVideoWithJson() {
+  TTcpConnectedPort *TcpConnectedPort=NULL;
+  TTcpConnectedPort *TcpConnectedPort2=NULL;
+  // :x: 접속IP는 config/Remote_UI_config.yaml 파일을 참조
+  std::string strIP = g_Config["CAM_IP"].as<std::string>();
+  std::string strPortImage = g_Config["CAM_PORT_IMAGE"].as<std::string>();
+  std::string strPortJson = g_Config["CAM_PORT_JSON"].as<std::string>();
+
+  printf("\033[1;33m[%s][%d] :x: Start Connecting [%s][%s]\033[m\n",
+      __FUNCTION__,__LINE__,strIP.c_str(),strPortImage.c_str());
+
+  int iRetryNumber = 8;
+  int iRetryCount = 0;
+//  bool bRetvalue;
+  std::mutex g_ListLock;
+  std::list<cv::Mat> g_ImageList;
+  std::list<std::vector<DetectionInfo>> g_InfoList;
+
+  // :x: nano 접속을 수행하고 실패하면 재시도를 수행한다
+  for (int i =0 ; i < iRetryNumber ; i++ )
+  {
+    iRetryCount++;
+    if ((TcpConnectedPort=OpenTcpConnection(
+            strIP.c_str(),strPortImage.c_str()))==NULL)
+    {
+      printf("\033[1;31m[%s][%d] :x: Connection Err Retry count %d,"
+             "wait 3 seconds then Retry \033[m\n",
+          __FUNCTION__,__LINE__,i);
+      sleep(3);
+    }
+    else {
+      printf("\033[1;33m[%s][%d] :x: Connection Success \033[m\n",
+          __FUNCTION__,__LINE__);
+      break;
+    }
+  }
+  if (iRetryCount == iRetryNumber) {
+    printf("\033[1;31m[%s][%d] :x: Connection Failed check the server \033[m\n",
+        __FUNCTION__,__LINE__);
+    return;
+  }
+
+  iRetryCount = 0;
+  for (int i =0 ; i < iRetryNumber ; i++ )
+  {
+    iRetryCount++;
+    if ((TcpConnectedPort2 = OpenTcpConnection(strIP.c_str(), strPortJson.c_str())) == NULL)
+    {
+      printf("\033[1;31m[%s][%d] :x: Fail to Connect [%s][%s]\033[m\n",
+          __FUNCTION__,__LINE__,strIP.c_str(),strPortJson.c_str());
+      sleep(1);
+    } else {
+      printf("\033[1;33m[%s][%d] :x: Connection Success \033[m\n",
+          __FUNCTION__,__LINE__);
+      break;
+    }
+  }
+  if (iRetryCount == iRetryNumber) {
+    printf("\033[1;31m[%s][%d] :x: Connection Failed check the json server \033[m\n",
+        __FUNCTION__,__LINE__);
+    return;
+  }
+
+  std::thread thrImageReader([&](TTcpConnectedPort* TcpConnectedPort) {
+        int frameCount = 0;
+        bool retvalue;
+        Mat Image;
+
+        do {
+            retvalue = TcpRecvImageAsJpeg(TcpConnectedPort, &Image);
+            frameCount++;
+            std::cout << "runnerRecvImage frameCount:" << frameCount << std::endl;
+
+            g_ListLock.lock();
+            g_ImageList.push_back(Image);
+            g_ListLock.unlock();
+        } while (1); // loop until user hits quit
+    }, TcpConnectedPort);
+
+  std::thread thrJsonReader([&](TTcpConnectedPort* TcpConnectedPort) {
+        std::vector<DetectionInfo> result;
+
+        do {
+            result.clear();
+            if (TcpRecvDetectionInfo(TcpConnectedPort, result)) {
+                g_ListLock.lock();
+                g_InfoList.push_back(result);
+                g_ListLock.unlock();
+                // parse json data from decrypted_buff
+            }
+            else
+            {
+                printf("fail to read2:\n");
+            }
+        } while (1); // loop until user hits quit
+
+    }, TcpConnectedPort2);
+
+  // :x: connect 되면 이미지 data chunk를 받고 화면에 표시한다
+  static int cnt = 0;
+  Mat Image;
+  std::vector<DetectionInfo> infoList;
+  bool received;
+  std::chrono::system_clock::time_point prev;
+  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+  double fps;
+  double totalFps = 0.0;
+  double avrageFps = 0.0;
+  while (1) {
+    g_ListLock.lock();
+    if (g_ImageList.size() > 0 && g_InfoList.size() > 0)
+        received = true;
+    else
+        received = false;
+    g_ListLock.unlock();
+
+    if (received) {
+        g_ListLock.lock();
+        Image = g_ImageList.front();
+        g_ImageList.pop_front();
+        infoList = g_InfoList.front();
+        g_InfoList.pop_front();
+        g_ListLock.unlock();
+
+        if (GetMode() == MODE_TESTRUN) {
+          cv::cvtColor(Image,Image,COLOR_BGR2RGB);
+        }
+
+        for (size_t i = 0; i < infoList.size(); ++i) {
+            DetectionInfo& info = infoList[i];
+
+            cv::Rect rect(info.x, info.y, info.w, info.h);
+            cv::Scalar bbox_color(0, 255, 0, 255);
+            // get label
+            if (info.category == 1) {
+            }
+            else {
+                bbox_color = cv::Scalar(255, 0, 0, 255);
+            }
+            // draw bounding boxes around the face
+            cv::rectangle(Image, rect, bbox_color, 2, 8, 0);
+
+            // print label to the bounding box
+            //cv::putText(Image, info.label, cv::Point(info.x, info.y + info.h + 20),
+            //    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 255, 255, 255), 3); // mat, text, coord, font, scale, bgr color, line thickness
+            //cv::putText(Image, info.label, cv::Point(info.x, info.y + info.h + 20),
+            //    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
+            cv::putText(Image, info.label, cv::Point(info.x, info.y + info.h + 20),
+                    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, bbox_color, 2); // mat, text, coord, font, scale, bgr color, line thickness
+        }
+
+        cnt++;
+        prev = now;
+        now = std::chrono::system_clock::now();
+        auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now - prev);
+        if (milliseconds.count() > 0) {
+            fps = 1000.0 / milliseconds.count();
+        }
+        else {
+            fps = 10.0;
+        }
+        totalFps += fps;
+        avrageFps = avrageFps * 0.9 + fps * 0.1;
+
+        char str[256];
+        sprintf(str, "Frame %d  Rate:%.1lf FPS", cnt, avrageFps);               // print the FPS to the bar
+
+        cv::putText(Image, str, cv::Point(0, 20),
+            cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 255, 255, 255), 3);
+        cv::putText(Image, str, cv::Point(0, 20),
+            cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
+
+        auto img =
+          QImage((const unsigned char*) Image.data,Image.cols,Image.rows,
+              Image.step,QImage::Format_RGB888);
+
+        m_pLabel00->setPixmap(QPixmap::fromImage(img));
+
+        // :x: shutter는 화면 촬영에 대한 flag
+        if (m_bShutter == true) {
+          // :x: 화면 촬영 버튼이 눌렸을 때에 대한 처리
+          m_bShutter = false;
+          printf("\033[1;33m[%s][%d] :x: Take Picture \033[m\n",
+              __FUNCTION__,__LINE__);
+
+          cv::cvtColor(Image,Image,COLOR_BGR2RGB);
+          cnt++;
+          std::string strFileName;
+          // :x: IOI 명과 epoch time tick을 사용해 유니크한 저장 파일명을 만든다
+          GetUniqueFileName(strFileName, m_strIOI);
+          printf("\033[1;36m[%s][%d] :x: chk filename =%s \033[m\n",
+              __FUNCTION__,__LINE__,strFileName.c_str());
+
+          // :x: JPEG 파일로 저장한다
+          imwrite(strFileName,Image);
+
+          // :x: 저장된 파일명은 벡터에 기록해둔다
+          m_vecCapturedFiles.push_back(strFileName);
+
+          // :x: Leaning 모드일 경우 촬영된 샘플의 개수를 카운트해서 정해진 샘플을
+          // :x: 모두 촬영하면 nano에 사진을 전송하고 종료하는 시퀀스를 수행한다
+          if (GetMode() == MODE_LEARNING) {
+            m_iCntofSample++;
+            std::string strMsgMain = std::string("Sample to capture ") +
+              std::to_string(m_iNumberOfSample);
+            std::string strMsgInfo = std::string("Now ") +
+              std::to_string(m_iCntofSample) +" picture(s) captured";
+            QMessageBox::information(this,strMsgMain.c_str(),
+                strMsgInfo.c_str(),QMessageBox::Yes);
+
+            if ( m_iCntofSample == m_iNumberOfSample ) {
+              QMessageBox::information(this,"Notice",
+                  "All Pictures are captured. Now retrain sequence",QMessageBox::Yes);
+              // :x: 정한 숫자만큼 샘플을 얻었으면 전송 시퀀스를 수행한다
+              RetrainSequence(m_strIOI,m_vecCapturedFiles);
+              break;
+            }
+          }
+        }
+    } else {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+  }
+  printf("\033[1;36m[%s][%d] :x: End \033[m\n",__FUNCTION__,__LINE__);
+
+  CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
+  handleBtnExit();
+}
+
+/**
+ * @brief Learning모드에서 촬영한 사진을 전송하는 시퀀스를 수행한다
+ *
+ * @param strIOI_Name[IN] IOI 이름
+ * @param vecFileList[IN] 저장한 파일명의 리스트
+ *
+ * @return 
+ */
 int CRunModeDlg::RetrainSequence(std::string strIOI_Name, 
                                  std::vector<std::string> vecFileList) {
   // create directory of IOI & copy files to remote
 
+  // :x: 원격으로 nano에 IOI이름의 디렉토리를 생성한다
   // :x: the command that creates the IOI directory
   std::string strCmdCreate_IOI_dir = 
     std::string("mkdir -p  ") +
@@ -233,11 +509,13 @@ int CRunModeDlg::RetrainSequence(std::string strIOI_Name,
   printf("\033[1;36m[%s][%d] :x: directory cmd = %s \033[m\n",
       __FUNCTION__,__LINE__,strCmdCreate_IOI_dir.c_str());
 
+  // :x: 촬영하고 저장한 파일들의 이름을 스트링으로 만든다
   std::string strFileList={};
   for (auto filename : vecFileList){
     strFileList+=" "+filename+" ";
   }
 
+  // :x: scp를 사용 nano에 저장한 사진파일을 전송한다
   // :x: the command that copy the file to remote IOI directory
   std::string strCmdCopyFiletoIOIdir = 
     std::string("sshpass -p")+
@@ -261,14 +539,15 @@ int CRunModeDlg::RetrainSequence(std::string strIOI_Name,
   DoRemoteCmd(strCmdCreate_IOI_dir);
   DoShellCmd(strCmdCopyFiletoIOIdir);
 
-
   QMessageBox::information(this,"Notice",
       "Files Dispatched done, now retrain Start",QMessageBox::Yes);
+#if 0 // :x: retrain sequence는 제거한다, scan mode에서 처리
   Hwnd_RetrainSequence(this);
 
   // retrain sequence 
   QMessageBox::information(this,"Notice",
       "retrain done ",QMessageBox::Yes);
+#endif // :x: for test
 
   return 0;
 }
@@ -295,4 +574,3 @@ void CRunModeDlg::Create_commands() {
     "pkill LgFaceRecDemoTC";
 
 }
-
