@@ -8,6 +8,7 @@
 #include <chrono>
 #include <mutex>
 #include <unordered_map>
+#include "JitterMeter.h"
 
 const std::unordered_map<int, std::vector<std::string>> test_frame_numbers = {
     { 153,  { "Monica", "Extra 1" } },
@@ -504,6 +505,9 @@ void CRunModeDlg::LoopVideoWithJson() {
         cv::putText(Image2, str, cv::Point(0, 20),
             cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
 
+        // :x: Display Jitter Data
+        DisplayJitterInfo(Image2);
+       
         auto img =
           QImage((const unsigned char*) Image2.data,Image2.cols,Image2.rows,
               Image2.step,QImage::Format_RGB888);
@@ -655,4 +659,21 @@ void CRunModeDlg::Create_commands() {
   m_strCmdClearLgFaceRecDemo = 
     "pkill LgFaceRecDemoTC";
 
+}
+
+/**
+ * @brief Display Jitter Info on cv Matrix
+ *
+ * @param Image[OUT]
+ */
+void CRunModeDlg::DisplayJitterInfo(cv::Mat& Image) {
+  char pJitterData[256]={};
+  long double ldJitterTime_ms;
+  cv::Point DisplayPosition = {0, 40};
+  GetCurrentJitter(ldJitterTime_ms);
+  sprintf(pJitterData,"Jitter %6.1Lf msec",ldJitterTime_ms);
+  cv::putText(Image, pJitterData, DisplayPosition,
+      cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 0, 255, 255), 3);
+  cv::putText(Image, pJitterData, DisplayPosition,
+      cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
 }

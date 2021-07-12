@@ -65,6 +65,7 @@ public:
   // :x: clean up exist process
   std::string  m_strCmdClearLgFaceRecDemo;
 
+  void DisplayJitterInfo(cv::Mat& Image);
 
 private slots:
   // :x: button handlers should be in the 'slots'
