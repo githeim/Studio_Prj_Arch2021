@@ -17,7 +17,7 @@ const std::unordered_map<int, std::vector<std::string>> test_frame_numbers = {
     { 339,  { "Phoebe", "Extra 1", "Unknown" } },
     { 504,  { "Rachel", "Unknown" } },
     { 700,  { "Rachel", "Unknown" } },
-    { 910,  { "Monicar", "Phoebe", "Rachel" } },
+    { 910,  { "Monica", "Phoebe", "Rachel" } },
     { 1007, { "Rachel", "Ross" } },
     { 1173, { "Monica", "Phoebe", "Unknown", "Unknown", "Unknown" } },
     { 1279, { } },
@@ -33,7 +33,7 @@ const std::unordered_map<int, std::vector<std::string>> test_frame_numbers = {
     { 1969, { "Rachel", "Ross" } },
     { 2256, { "Monica" } },
     { 2440, { "Rachel" } },
-    { 2747, { "Pheobe", "Rache", "Monica" } },
+    { 2747, { "Phoebe", "Rachel", "Monica" } },
     { 2966, { "Rachel", "Monica" } },
     { 3033, { "Joey" } }
 };
@@ -457,18 +457,20 @@ void CRunModeDlg::LoopVideoWithJson() {
 
         auto iter = test_frame_numbers.find(cnt);
         if (iter != test_frame_numbers.end()) {
+            std::vector<DetectionInfo> infoList2 = infoList;
             const std::vector<std::string> &required_names = iter->second;
             for (size_t j = 0; j < required_names.size(); ++j) {
                 const std::string &req_name = required_names[j];
 
                 total_expected_count++;
 
-                auto iter = std::find_if(infoList.begin(), infoList.end(), [&](DetectionInfo &info)
+                auto iter = std::find_if(infoList2.begin(), infoList2.end(), [&](DetectionInfo &info)
                     {
                         return (info.label == req_name);
                     });
-                if (iter != infoList.end()) {
+                if (iter != infoList2.end()) {
                     exact_found_count++;
+                    infoList2.erase(iter);
                 }
             }
             /*
