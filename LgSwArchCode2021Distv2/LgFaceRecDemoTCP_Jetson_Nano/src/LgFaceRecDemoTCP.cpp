@@ -169,8 +169,12 @@ int camera_face_recognition(int argc, char *argv[])
         current_queue_count = NetworkInterface::GetInstance()->GetCurrentTransmitQueueSize();
         current_time = std::chrono::system_clock::now();
         auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - prev_time);
-        scan_interval = 50 + ((current_queue_count - 1) * 30);
-        if ((current_queue_count > 0 ) && (milliseconds.count() < scan_interval)) {
+        if (current_queue_count > 0) {
+            scan_interval = 50 + ((current_queue_count - 1) * 30);
+        } else {
+            scan_interval = 50;
+        }
+        if (milliseconds.count() < scan_interval) {
             std::this_thread::sleep_for(std::chrono::milliseconds(scan_interval - milliseconds.count()));
         }
         prev_time = std::chrono::system_clock::now();
