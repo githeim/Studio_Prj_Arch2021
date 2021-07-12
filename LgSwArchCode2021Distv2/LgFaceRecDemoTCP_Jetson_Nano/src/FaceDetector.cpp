@@ -16,13 +16,13 @@ const std::unordered_map<int, std::vector<std::string>> test_frame_numbers = {
     { 339,  { "Phoebe", "Extra 1", "Unknown" } },
     { 504,  { "Rachel", "Unknown" } },
     { 700,  { "Rachel", "Unknown" } },
-    { 910,  { "Monicar", "Phoebe", "Rachel" } },
+    { 910,  { "Monica", "Phoebe", "Rachel" } },
     { 1007, { "Rachel", "Ross" } },
     { 1173, { "Monica", "Phoebe", "Unknown", "Unknown", "Unknown" } },
     { 1279, { } },
     { 1355, { "Extra 4", "Unknown" } },
     { 1397, { "Extra 4", "Unknown" } },
-    { 1403, { "Monica" } },
+    { 1408, { "Monica" } },
     { 1470, { "Rachel", "Ross", "Phoebe", "Chandler", "Joey" } },
     { 1606, { "Rachel" } },
     { 1687, { "Rachel", "Ross", "Phoebe", "Chandler", "Joey" } },
@@ -31,8 +31,8 @@ const std::unordered_map<int, std::vector<std::string>> test_frame_numbers = {
     { 1895, { "Joey", "Chandler", "Monica", "Phoebe" } },
     { 1969, { "Rachel", "Ross" } },
     { 2256, { "Monica" } },
-    { 2240, { "Rachel" } },
-    { 2747, { "Pheobe", "Rache", "Monica" } },
+    { 2440, { "Rachel" } },
+    { 2747, { "Phoebe", "Rachel", "Monica" } },
     { 2966, { "Rachel", "Monica" } },
     { 3033, { "Joey" } }
 };
@@ -214,6 +214,8 @@ bool FaceDetector::verifyDetection(const int &frame_number, std::vector<cv::Rect
     bool ret = true;
     std::ofstream ofs ("detection_result.txt", std::ofstream::out | std::ofstream::app);
 
+    std::vector<std::string> detected_labels2 = detected_labels;
+
     const std::vector<std::string> &required_names = iter->second;
     ofs << "frame num:" << frame_number << " required num:" << required_names.size() << " detected num:" << rects.size() << std::endl;
     for (int j = 0; j < required_names.size(); ++j) {
@@ -222,14 +224,16 @@ bool FaceDetector::verifyDetection(const int &frame_number, std::vector<cv::Rect
 
         total_expected_count++;
 
-        auto iter = std::find_if(detected_labels.begin(), detected_labels.end(), [&](std::string &name)
+        auto iter = std::find_if(detected_labels2.begin(), detected_labels2.end(), [&](std::string &name)
             {
                 return (name == req_name);
             });
-        if (iter == detected_labels.end()) {
-            not_found_count++;
+        if (iter == detected_labels2.end()) {
             ofs << " **** not found : " << req_name << " ****" << std::endl;
             ret = false;
+        } else {
+            detected_labels2.erase(iter);
+            exact_found_count++;
         }
     }
     for (int i = 0; i < detected_labels.size(); ++i) {
@@ -248,9 +252,15 @@ bool FaceDetector::verifyDetection(const int &frame_number, std::vector<cv::Rect
         }
     }
 
+    total_expected_frames++;
+    if (required_names.size() == detected_labels.size()) {
+        correct_count_frames++;
+    }
+
     if (total_expected_count > 0) {
-        ofs << "====== total not found   : " << not_found_count << " false negitive:" << ((100 * not_found_count) / total_expected_count) << "%" << std::endl;
-        ofs << "====== total wrong found : " << wrong_found_count << " false positive:" << ((100 * wrong_found_count) / total_expected_count) << "%" << std::endl;
+        ofs << "====== total correct frame : " << correct_count_frames << " rate:" << ((100 * correct_count_frames) / total_expected_frames) << "%" << std::endl;
+        ofs << "====== total faces found   : " << exact_found_count << " rate:" << ((100 * exact_found_count) / total_expected_count) << "%" << std::endl;
+//        ofs << "====== total wrong found : " << wrong_found_count << " rate:" << ((100 * wrong_found_count) / total_expected_count) << "%" << std::endl;
     }
 
     ofs.flush();
