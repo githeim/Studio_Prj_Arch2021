@@ -276,7 +276,7 @@ bool TcpRecvDetectionInfo(TTcpConnectedPort* TcpConnectedPort, std::vector<Detec
         memset(decrypted_buff, 0, datasize + 1);
         unsigned int decrypted_len = StrDecrypt(buff, datasize, decrypted_buff);
         std::string jsonData((const char*)decrypted_buff, decrypted_len);
-        printf("read detection data:%d\n", decrypted_len);
+        //printf("read detection data:%d\n", decrypted_len);
         parseJsonValues(jsonData, result);
 #else
         printf("read detection data:%d\n", datasize);
