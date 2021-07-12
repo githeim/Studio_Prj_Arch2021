@@ -360,7 +360,7 @@ void CRunModeDlg::LoopVideoWithJson() {
                 break;
             }
             frameCount++;
-            std::cout << "runnerRecvImage frameCount:" << frameCount << std::endl;
+            //std::cout << "runnerRecvImage frameCount:" << frameCount << std::endl;
 
             g_ListLock.lock();
             g_ImageList.push_back(Image);
@@ -448,10 +448,11 @@ void CRunModeDlg::LoopVideoWithJson() {
             fps = 1000.0 / milliseconds.count();
         }
         else {
-            fps = 10.0;
+            fps = 20.0;
         }
         totalFps += fps;
-        avrageFps = avrageFps * 0.9 + fps * 0.1;
+        //avrageFps = avrageFps * 0.9 + fps * 0.1;
+        avrageFps = totalFps / cnt;
 
         auto iter = test_frame_numbers.find(cnt);
         if (iter != test_frame_numbers.end()) {
@@ -507,8 +508,8 @@ void CRunModeDlg::LoopVideoWithJson() {
           QImage((const unsigned char*) Image2.data,Image2.cols,Image2.rows,
               Image2.step,QImage::Format_RGB888);
 
-        printf("\033[1;36m[%s][%d] :x: draw a image =%d \033[m\n",
-            __FUNCTION__,__LINE__, cnt);
+        //printf("\033[1;36m[%s][%d] :x: draw a image =%d \033[m\n",
+        //    __FUNCTION__,__LINE__, cnt);
 
         m_pLabel00->setPixmap(QPixmap::fromImage(img));
 
