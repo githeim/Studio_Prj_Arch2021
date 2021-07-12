@@ -7,6 +7,35 @@
 #include <unistd.h>
 #include <chrono>
 #include <mutex>
+#include <unordered_map>
+
+const std::unordered_map<int, std::vector<std::string>> test_frame_numbers = {
+    { 153,  { "Monica", "Extra 1" } },
+    { 201,  { "Rachel", "Extra 1", "Unknown" } },
+    { 221,  { "Extra 2", "Extra 3" } },
+    { 339,  { "Phoebe", "Extra 1", "Unknown" } },
+    { 504,  { "Rachel", "Unknown" } },
+    { 700,  { "Rachel", "Unknown" } },
+    { 910,  { "Monicar", "Phoebe", "Rachel" } },
+    { 1007, { "Rachel", "Ross" } },
+    { 1173, { "Monica", "Phoebe", "Unknown", "Unknown", "Unknown" } },
+    { 1279, { } },
+    { 1355, { "Extra 4", "Unknown" } },
+    { 1397, { "Extra 4", "Unknown" } },
+    { 1408, { "Monica" } },
+    { 1470, { "Rachel", "Ross", "Phoebe", "Chandler", "Joey" } },
+    { 1606, { "Rachel" } },
+    { 1687, { "Rachel", "Ross", "Phoebe", "Chandler", "Joey" } },
+    { 1711, { "Extra 5", "Unknown" } },
+    { 1878, { "Joey", "Chandler", "Phoebe" } },
+    { 1895, { "Joey", "Chandler", "Monica", "Phoebe" } },
+    { 1969, { "Rachel", "Ross" } },
+    { 2256, { "Monica" } },
+    { 2440, { "Rachel" } },
+    { 2747, { "Pheobe", "Rache", "Monica" } },
+    { 2966, { "Rachel", "Monica" } },
+    { 3033, { "Joey" } }
+};
 
 int Hwnd_RetrainSequence(CRunModeDlg* pDlg) {
   DoRemoteCmd(pDlg->m_strCmdClearLgFaceRecDemo);
@@ -297,6 +326,8 @@ void CRunModeDlg::LoopVideoWithJson() {
     return;
   }
 
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
   iRetryCount = 0;
   for (int i =0 ; i < iRetryNumber ; i++ )
   {
@@ -325,6 +356,9 @@ void CRunModeDlg::LoopVideoWithJson() {
 
         do {
             retvalue = TcpRecvImageAsJpeg(TcpConnectedPort, &Image);
+            if (!retvalue) {
+                break;
+            }
             frameCount++;
             std::cout << "runnerRecvImage frameCount:" << frameCount << std::endl;
 
@@ -348,6 +382,7 @@ void CRunModeDlg::LoopVideoWithJson() {
             else
             {
                 printf("fail to read2:\n");
+                break;
             }
         } while (1); // loop until user hits quit
 
@@ -358,22 +393,18 @@ void CRunModeDlg::LoopVideoWithJson() {
   Mat Image;
   Mat Image2;
   std::vector<DetectionInfo> infoList;
-  bool received;
   std::chrono::system_clock::time_point prev;
   std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
   double fps;
   double totalFps = 0.0;
   double avrageFps = 0.0;
+
+  unsigned int exact_found_count = 0;
+  unsigned int total_expected_count = 0;
+
   while (1) {
     g_ListLock.lock();
-    if (g_ImageList.size() > 0 && g_InfoList.size() > 0)
-        received = true;
-    else
-        received = false;
-    g_ListLock.unlock();
-
-    if (received) {
-        g_ListLock.lock();
+    if (g_ImageList.size() > 0 && g_InfoList.size() > 0) {
         Image = g_ImageList.front();
         g_ImageList.pop_front();
         infoList = g_InfoList.front();
@@ -382,6 +413,8 @@ void CRunModeDlg::LoopVideoWithJson() {
 
         if (GetMode() == MODE_TESTRUN) {
           cv::cvtColor(Image,Image2,COLOR_BGR2RGB);
+        } else {
+          Image2 = Image;
         }
 
         for (size_t i = 0; i < infoList.size(); ++i) {
@@ -420,8 +453,50 @@ void CRunModeDlg::LoopVideoWithJson() {
         totalFps += fps;
         avrageFps = avrageFps * 0.9 + fps * 0.1;
 
+        auto iter = test_frame_numbers.find(cnt);
+        if (iter != test_frame_numbers.end()) {
+            const std::vector<std::string> &required_names = iter->second;
+            for (size_t j = 0; j < required_names.size(); ++j) {
+                const std::string &req_name = required_names[j];
+
+                total_expected_count++;
+
+                auto iter = std::find_if(infoList.begin(), infoList.end(), [&](DetectionInfo &info)
+                    {
+                        return (info.label == req_name);
+                    });
+                if (iter != infoList.end()) {
+                    exact_found_count++;
+                }
+            }
+            /*
+            for (size_t i = 0; i < infoList.size(); ++i) {
+                DetectionInfo &info = infoList[i];
+
+                auto iter = std::find_if(required_names.begin(), required_names.end(), [&](const std::string &name)
+                    {
+                        return (name == info.label);
+                    });
+                if (iter != required_names.end()) {
+                }
+            }
+            */
+        }
+
         char str[256];
-        sprintf(str, "Frame %d  Rate:%.1lf FPS", cnt, avrageFps);               // print the FPS to the bar
+        if (GetMode() == MODE_CAM) {
+            sprintf(str, "Frame %d  FPS %.1lf  Accuracy %lu", cnt, avrageFps, infoList.size());
+        } else if (GetMode() == MODE_TESTRUN) {
+            if (total_expected_count > 0) {
+                sprintf(str, "Frame %d  FPS %.1lf  Accuracy %d %% (%d/%d)",
+                        cnt, avrageFps, ((100 * exact_found_count) / total_expected_count), exact_found_count, total_expected_count);
+            } else {
+                sprintf(str, "Frame %d  FPS %.1lf  Accuracy - %% (%d/%d)",
+                        cnt, avrageFps, exact_found_count, total_expected_count);
+            }
+        } else {
+            str[0] = 0;
+        }
 
         cv::putText(Image2, str, cv::Point(0, 20),
             cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 255, 255, 255), 3);
@@ -431,6 +506,9 @@ void CRunModeDlg::LoopVideoWithJson() {
         auto img =
           QImage((const unsigned char*) Image2.data,Image2.cols,Image2.rows,
               Image2.step,QImage::Format_RGB888);
+
+        printf("\033[1;36m[%s][%d] :x: draw a image =%d \033[m\n",
+            __FUNCTION__,__LINE__, cnt);
 
         m_pLabel00->setPixmap(QPixmap::fromImage(img));
 
@@ -476,6 +554,8 @@ void CRunModeDlg::LoopVideoWithJson() {
           }
         }
     } else {
+        g_ListLock.unlock();
+
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
   }
