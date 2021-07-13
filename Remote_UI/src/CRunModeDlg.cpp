@@ -9,6 +9,7 @@
 #include <mutex>
 #include <unordered_map>
 #include "JitterMeter.h"
+#include <list>
 
 const std::unordered_map<int, std::vector<std::string>> test_frame_numbers = {
     { 153,  { "Monica", "Extra 1" } },
@@ -676,4 +677,46 @@ void CRunModeDlg::DisplayJitterInfo(cv::Mat& Image) {
       cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 0, 255, 255), 3);
   cv::putText(Image, pJitterData, DisplayPosition,
       cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
+
+  // Draw Histogram
+  static std::list<int> listHistogram = {0,0,0,0,0,0,0,0,0,0};
+
+  listHistogram.pop_front();
+
+
+
+  int iMaxBarHeight = 80;  // Histogram bars' max height
+  int iBasePosY = DisplayPosition.y + iMaxBarHeight+3;
+  int iLineWidth =1;
+  cv::Scalar Color_Boundary(255,255,255,255);
+  cv::Scalar Color;
+  cv::Scalar ChartColor_Normal (  0, 255,   0, 255);
+  cv::Scalar ChartColor_Warning(255, 255,   0, 255);
+  cv::Scalar ChartColor_Err    (255,   0,   0, 255);
+
+  float fSize = 0; 
+  if (ldJitterTime_ms < 100 ) {
+    Color = ChartColor_Normal;
+    fSize = (float)iMaxBarHeight*(ldJitterTime_ms/100.0);
+  } else if ( ldJitterTime_ms >= 100 && ldJitterTime_ms < 200 ) {
+    Color = ChartColor_Warning;
+    fSize = (float)iMaxBarHeight*(ldJitterTime_ms/200.0);
+  } else if ( ldJitterTime_ms >= 200 ) {
+    Color = ChartColor_Err;
+    fSize = (float)iMaxBarHeight*(ldJitterTime_ms/500.0);
+  }
+  listHistogram.push_back((int)fSize);
+
+//  cv::Rect rect(0, iBasePosY-fSize, 20, fSize);
+//  cv::rectangle(Image, rect, Color, iLineWidth, 8, 0);
+
+  // :x: 가장 최근 10개의 box를 만든다
+  int iCnt = 0 ;
+  for (int iVal : listHistogram) {
+    cv::Rect rect(0+(20*iCnt), iBasePosY-iVal, 20, iVal);
+    cv::rectangle(Image, rect, Color, FILLED, LINE_8, 0);
+    cv::rectangle(Image, rect, Color_Boundary, iLineWidth, LINE_8, 0);
+    iCnt++;
+  }
+
 }

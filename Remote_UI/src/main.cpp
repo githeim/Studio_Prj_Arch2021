@@ -32,7 +32,9 @@ printf("\033[1;36m[%s][%d] :x: chk %s\033[m\n",__FUNCTION__,__LINE__,
   mainDialog.resize(winSize);
   mainDialog.showNormal();
 
+  // :x: jitter 측정 routine 구동
   StartUpdateJitter(g_Config["CAM_IP"].as<std::string>());
+
   ret = app.exec();
   StopUpdateJitter();
   return ret;

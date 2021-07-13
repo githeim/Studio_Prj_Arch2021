@@ -1,8 +1,3 @@
-// C program to Implement Ping
-
-// compile as -o ping
-// run as sudo ./ping <hostname>
-
 #include <string>
 #include <stdio.h>
 #include <sys/types.h>
