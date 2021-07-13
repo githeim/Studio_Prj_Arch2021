@@ -35,3 +35,32 @@ void readPGMFile(const std::string& fileName,  uint8_t *buffer, int inH, int inW
     infile.seekg(1, infile.cur);
     infile.read(reinterpret_cast<char*>(buffer), inH*inW);
 }
+
+void SetThreadAffinity(const char *name, int cpu_id)
+{
+    int s, j;
+    cpu_set_t cpuset;
+    pthread_t thread;
+
+    thread = pthread_self();
+
+    /* Set affinity mask to include CPUs 0 to 7 */
+
+    CPU_ZERO(&cpuset);
+    CPU_SET(cpu_id, &cpuset);
+
+    s = pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
+    if (s != 0)
+        fprintf(stderr, "fail pthread_setaffinity_np:%d\n", errno);
+
+    /* Check the actual affinity mask assigned to the thread */
+
+    s = pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
+    if (s != 0)
+        fprintf(stderr, "fail pthread_getaffinity_np:%d\n", errno);
+
+    printf("%s Set returned by pthread_getaffinity_np() contained:\n", __FUNCTION__);
+    for (j = 0; j < CPU_SETSIZE; j++)
+        if (CPU_ISSET(j, &cpuset))
+            printf("%s   uses CPU %d\n", name, j);
+}
