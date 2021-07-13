@@ -264,6 +264,8 @@ void NetworkInterface::StopWhenEmpty()
 }
 
 void NetworkInterface::Hwnd_JpegEncoding(    ) {
+    SetThreadAffinity("JpegEncoder", 1);
+
     clock_t begin;
     clock_t encrypt;
     clock_t end;
@@ -328,6 +330,8 @@ void NetworkInterface::EncodeJPEG(cv::Mat &data)
 }
 
 void NetworkInterface::Hwnd_TransmitImage(    ) {
+    SetThreadAffinity("TransmitImage", 3);
+
     unsigned int imagesize;
     ssize_t sent_size;
     clock_t begin;

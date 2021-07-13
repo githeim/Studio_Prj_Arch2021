@@ -44,4 +44,5 @@ public:
 
 std::string locateFile(const std::string& input, const std::vector<std::string> & directories);
 void readPGMFile(const std::string& fileName,  uint8_t *buffer, int inH, int inW);
+void SetThreadAffinity(const char *name, int cpu_id);
 #endif // _TRT_COMMON_H_

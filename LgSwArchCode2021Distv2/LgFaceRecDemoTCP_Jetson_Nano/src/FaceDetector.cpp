@@ -6,6 +6,8 @@
 #include "PerformanceLogger.h"
 #include "NetworkInterface.h"
 
+#define SEPARATE_CLASSIFY_THREAD
+
 #define VERIFY_ACCURACY_RATE
 #ifdef VERIFY_ACCURACY_RATE
 int current_frame_number = 0;
@@ -51,9 +53,12 @@ FaceDetector::FaceDetector(face_embedder &embedder, face_classifier &classifier,
       m_finder(finder)
 {
     veryfy_detection = false;
-    not_found_count = 0;
+    correct_count_frames = 0;
+    total_expected_frames = 0;
+    exact_found_count = 0;
     wrong_found_count = 0;
     total_expected_count = 0;
+    unlink("detection_result.txt");
 }
 
 FaceDetector::~FaceDetector()
@@ -75,10 +80,11 @@ FaceDetector *FaceDetector::GetInstance()
 
 int FaceDetector::Initialize()
 {
-
+#ifdef SEPARATE_CLASSIFY_THREAD
     g_pThrClassify = std::thread(runClassifier);
 
     pthread_setname_np(g_pThrClassify.native_handle(), "FaceDetector");
+#endif // SEPARATE_CLASSIFY_THREAD
 
     return 0;
 }
@@ -92,6 +98,7 @@ void FaceDetector::PushClassifyFaces(
             double &fps,
             const bool &skip_detection
 ) {
+#ifdef SEPARATE_CLASSIFY_THREAD
     std::shared_ptr<ClassifyData> data = std::make_shared<ClassifyData>();
     data->origin_cpu = origin_cpu.clone();
     data->num_dets = num_dets;
@@ -107,9 +114,15 @@ void FaceDetector::PushClassifyFaces(
 
     g_CondClassify.notify_all();
     g_mtxClassify.unlock();
+#else
+    ClassifyFaces(origin_cpu, num_dets, rects, label_encodings, face_embeddings, fps, skip_detection);
+#endif // SEPARATE_CLASSIFY_THREAD
 }
 
 void FaceDetector::Hwnd_Classifier(    ) {
+    SetThreadAffinity("Classifier", 0);
+
+
     std::shared_ptr<ClassifyData> data;
     while (1) {
 
@@ -281,8 +294,9 @@ void FaceDetector::writeVerifyResult()
     std::ofstream ofs ("detection_result.txt", std::ofstream::out | std::ofstream::app);
 
     ofs << "====================================" << std::endl;
-    ofs << " **** total not found   : " << not_found_count << std::endl;
-    ofs << " **** total wrong found : " << not_found_count << std::endl;
+    ofs << "====== total correct frame : " << correct_count_frames << " rate:" << ((100 * correct_count_frames) / total_expected_frames) << "%" << std::endl;
+    ofs << "====== total faces found   : " << exact_found_count << " rate:" << ((100 * exact_found_count) / total_expected_count) << "%" << std::endl;
+//    ofs << "====== total wrong found : " << wrong_found_count << " rate:" << ((100 * wrong_found_count) / total_expected_count) << "%" << std::endl;
     ofs << "====================================" << std::endl;
 
     ofs.flush();

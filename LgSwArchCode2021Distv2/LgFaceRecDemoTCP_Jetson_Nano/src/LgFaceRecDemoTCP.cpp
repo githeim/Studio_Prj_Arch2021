@@ -310,11 +310,7 @@ int main(int argc, char *argv[])
 
     int state = 0;
 
-    int ret = setpriority(PRIO_PGRP, getpgid(0), -20);
-    if (ret == -1)
-    {
-        printf("setpriorty err:%d\n", errno);
-    }
+    SetThreadAffinity("main", 2);
 
     state = camera_face_recognition( argc, argv );
 
