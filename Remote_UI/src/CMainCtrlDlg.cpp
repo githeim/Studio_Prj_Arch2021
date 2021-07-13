@@ -1,7 +1,7 @@
 #include "CMainCtrlDlg.h"
 
 #include <QCoreApplication>
-
+#include <regex>
 #include <memory>
 #include <unistd.h>
 
@@ -182,7 +182,7 @@ void CMainCtrlDlg::handleLearningMode() {
   static int iNumOfSample = 3;
   // :x: 등록할 사용자 이름을 입력 받는다 
   QString text = QInputDialog::getText(this, tr("Input the name of IOI"),
-      tr("User name:"), QLineEdit::Normal,
+      tr("User name(alphabets only):"), QLineEdit::Normal,
       strDefaultName.c_str(), &bOk);
   
   // :x: 입력된 IOI 이름에 대한 예외조건 처리
@@ -192,6 +192,13 @@ void CMainCtrlDlg::handleLearningMode() {
     printf("\033[1;36m[%s][%d] :x: No Input \033[m\n",__FUNCTION__,__LINE__);
     return;
   }
+
+  if(std::regex_match(strIOI, std::regex("[a-zA-Z0-9_]+")) == false)
+  {
+     printf("string is not matched with the regular expression");
+     return;
+  }
+
   if (bOk && !strIOI.empty()) {
     printf("\033[1;36m[%s][%d] :x: IOI is [%s] \033[m\n",__FUNCTION__,__LINE__,
         strIOI.c_str());
@@ -307,6 +314,7 @@ void CMainCtrlDlg::handleAddData(){
     printf("\033[1;36m[%s][%d] :x: No Input \033[m\n",__FUNCTION__,__LINE__);
     return;
   }
+  
   if (bOk && !strIOI.empty()) {
     printf("\033[1;36m[%s][%d] :x: IOI is [%s] \033[m\n",__FUNCTION__,__LINE__,
         strIOI.c_str());
