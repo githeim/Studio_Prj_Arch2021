@@ -529,8 +529,12 @@ void CRunModeDlg::LoopVideoWithJson() {
         cv::putText(Image2, str, cv::Point(0, 20),
             cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
 
-        // :x: Display Jitter Data
-        DisplayJitterInfo(Image2);
+        // :x: Learning 모드일 경우 Jitter 표시하지 않는다 
+        // :x: 촬영에 불필요 영상 출력 금지를 위해
+        if (GetMode() != MODE_LEARNING) {
+          // :x: Display Jitter Data
+          DisplayJitterInfo(Image2);
+        }
        
         auto img =
           QImage((const unsigned char*) Image2.data,Image2.cols,Image2.rows,
