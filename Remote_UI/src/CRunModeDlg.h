@@ -66,6 +66,9 @@ public:
   std::string  m_strCmdClearLgFaceRecDemo;
 
   void DisplayJitterInfo(cv::Mat& Image);
+  long double m_ldAvgJitter_ms;
+  std::vector<long double> m_vecJitter_ms;
+  int m_iJitterCount;
 
 private slots:
   // :x: button handlers should be in the 'slots'

@@ -52,6 +52,12 @@ CRunModeDlg::CRunModeDlg(int iMode,QWidget *parent)
   //QMessageBox::information(this,"Now Start",
   //    "Confirm",QMessageBox::Yes);
 
+  // 지터 통계 초기화
+  m_ldAvgJitter_ms = 0 ;
+  m_iJitterCount = 0;
+  m_vecJitter_ms.clear();
+  std::vector<long double>().swap(m_vecJitter_ms);
+
   printf("\033[1;36m[%s][%d] :x: mode %d \033[m\n",
       __FUNCTION__,__LINE__,iMode);
   SetMode(iMode);
@@ -674,7 +680,12 @@ void CRunModeDlg::DisplayJitterInfo(cv::Mat& Image) {
   long double ldJitterTime_ms;
   cv::Point DisplayPosition = {0, 40};
   GetCurrentJitter(ldJitterTime_ms);
-  sprintf(pJitterData,"Jitter %6.1Lf msec",ldJitterTime_ms);
+  m_vecJitter_ms.push_back(ldJitterTime_ms);
+  // 평균 지터 계산
+  m_ldAvgJitter_ms = std::accumulate(m_vecJitter_ms.begin(),m_vecJitter_ms.end(),0.0)/m_vecJitter_ms.size();
+
+  sprintf(pJitterData,"Jitter %6.1Lf msec AVG(%6.1Lf msec)",
+      ldJitterTime_ms,m_ldAvgJitter_ms);
   cv::putText(Image, pJitterData, DisplayPosition,
       cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 0, 255, 255), 3);
   cv::putText(Image, pJitterData, DisplayPosition,
@@ -684,8 +695,6 @@ void CRunModeDlg::DisplayJitterInfo(cv::Mat& Image) {
   static std::list<int> listHistogram = {0,0,0,0,0,0,0,0,0,0};
 
   listHistogram.pop_front();
-
-
 
   int iMaxBarHeight = 80;  // Histogram bars' max height
   int iBasePosY = DisplayPosition.y + iMaxBarHeight+3;
@@ -708,9 +717,6 @@ void CRunModeDlg::DisplayJitterInfo(cv::Mat& Image) {
     fSize = (float)iMaxBarHeight*(ldJitterTime_ms/500.0);
   }
   listHistogram.push_back((int)fSize);
-
-//  cv::Rect rect(0, iBasePosY-fSize, 20, fSize);
-//  cv::rectangle(Image, rect, Color, iLineWidth, 8, 0);
 
   // :x: 가장 최근 10개의 box를 만든다
   int iCnt = 0 ;
