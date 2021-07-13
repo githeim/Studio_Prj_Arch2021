@@ -427,7 +427,7 @@ void CRunModeDlg::LoopVideoWithJson() {
             if (info.category == 1) {
             }
             else {
-                bbox_color = cv::Scalar(255, 0, 0, 255);
+                bbox_color = cv::Scalar(0, 0, 255, 255);
             }
             // draw bounding boxes around the face
             cv::rectangle(Image2, rect, bbox_color, 2, 8, 0);
