@@ -15,3 +15,7 @@ CAM_LEARNING_MODE_CMD: "bg_LearningMode.sh"
 CAM_TRAIN_CMD: "bg_train.sh" 
 CAM_TEST_RUN_CMD: "bg_DemoWithVideo_Inter.sh"
 CAM_RUN_CMD: "bg_DemoWithCamera_Inter.sh"
+  
+  # CAM_TEST_RUN_CMD: "bg_DemoWithVideo.sh"
+  # CAM_RUN_CMD: "bg_DemoWithCamera.sh"
+RT_SCHED_CMD: "RT_sched.sh"

@@ -46,6 +46,21 @@ int Hwnd_RetrainSequence(CRunModeDlg* pDlg) {
   return 0;
 }
 
+/**
+ * @brief Real Time Scheduling을 적용한다
+ *
+ * @param pDlg[IN]
+ *
+ * @return 
+ */
+int Hwnd_Apply_RT_Sched() {
+printf("\033[1;31m[%s][%d] :x: Start RT \033[m\n",__FUNCTION__,__LINE__);
+
+  std::string strCmd =std::string("./")+g_Config["RT_SCHED_CMD"].as<std::string>();
+  //DoRemoteCmd(g_Config["RT_SCHED_CMD"].as<std::string>());
+  DoRemoteCmd(strCmd);
+  return 0;
+}
 
 CRunModeDlg::CRunModeDlg(int iMode,QWidget *parent)
 {
@@ -334,6 +349,9 @@ void CRunModeDlg::LoopVideoWithJson() {
     return;
   }
 
+  // :x: 접속이 성공하면, Realtime Scheduling으로 전환하는 스크립트를 실행한다
+  std::thread thrRtSched(Hwnd_Apply_RT_Sched);
+
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   iRetryCount = 0;
@@ -573,6 +591,7 @@ void CRunModeDlg::LoopVideoWithJson() {
   printf("\033[1;36m[%s][%d] :x: End \033[m\n",__FUNCTION__,__LINE__);
 
   CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
+  thrRtSched.join();
   handleBtnExit();
 }
 
