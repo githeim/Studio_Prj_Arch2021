@@ -401,10 +401,8 @@ void CRunModeDlg::LoopVideoWithJson() {
   Mat Image;
   Mat Image2;
   std::vector<DetectionInfo> infoList;
-  std::chrono::system_clock::time_point prev;
+  std::chrono::system_clock::time_point begin_time;
   std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-  double fps;
-  double totalFps = 0.0;
   double avrageFps = 0.0;
 
   unsigned int exact_found_count = 0;
@@ -449,18 +447,17 @@ void CRunModeDlg::LoopVideoWithJson() {
         }
 
         cnt++;
-        prev = now;
+        if (cnt == 1) {
+          begin_time = std::chrono::system_clock::now();
+        }
         now = std::chrono::system_clock::now();
-        auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now - prev);
+        auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now - begin_time);
         if (milliseconds.count() > 0) {
-            fps = 1000.0 / milliseconds.count();
+            avrageFps = cnt * 1000.0 / milliseconds.count();
         }
         else {
-            fps = 20.0;
+            avrageFps = 10.0;
         }
-        totalFps += fps;
-        //avrageFps = avrageFps * 0.9 + fps * 0.1;
-        avrageFps = totalFps / cnt;
 
         auto iter = test_frame_numbers.find(cnt);
         if (iter != test_frame_numbers.end()) {
