@@ -41,6 +41,7 @@ public:
 
 
   void LoopVideo();
+  void LoopVideoWithJson();
   std::thread *m_pThrVideo;
   std::string m_strIOI = "Default_";
   // :x: the number of capturing 
@@ -64,6 +65,10 @@ public:
   // :x: clean up exist process
   std::string  m_strCmdClearLgFaceRecDemo;
 
+  void DisplayJitterInfo(cv::Mat& Image);
+  long double m_ldAvgJitter_ms;
+  std::vector<long double> m_vecJitter_ms;
+  int m_iJitterCount;
 
 private slots:
   // :x: button handlers should be in the 'slots'

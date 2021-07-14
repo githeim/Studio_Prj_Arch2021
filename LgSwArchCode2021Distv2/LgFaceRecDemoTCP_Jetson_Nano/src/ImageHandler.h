@@ -5,7 +5,7 @@
 #include <fstream>
 
 #include "gstCamera.h"
-//#include "videoSource.h"
+#include "videoSource.h"
 
 typedef struct {
  std::ifstream    mpegfile;
@@ -36,7 +36,7 @@ public:
 private:
     static ImageHandler *m_Instance;
     gstCamera*  m_gstCamera;
-//    videoSource* m_videoStream;
+    videoSource* m_videoStream;
     TMotionJpegFileDesc MotionJpegFd;
     int         m_ImgWidth;
     int         m_ImgHeight;

@@ -1,5 +1,7 @@
 # jetson-Nano ---------------------
 CAM_IP:      "192.168.0.120"
+CAM_PORT_IMAGE: "5000"
+CAM_PORT_JSON:  "6000"
 CAM_ID:      "lg"
 CAM_PASSWD:  "lg"
 CAM_PATH : "/home/lg/Studio_Prj_Release/Studio_Prj_Arch2021/LgSwArchCode2021Distv2/LgFaceRecDemoTCP_Jetson_Nano"
@@ -11,5 +13,9 @@ CAM_TRAIN_DATASET_PATH: "faces/train/datasets/bbt"
 # Commands
 CAM_LEARNING_MODE_CMD: "bg_LearningMode.sh"
 CAM_TRAIN_CMD: "bg_train.sh" 
-CAM_TEST_RUN_CMD: "bg_DemoWithVideo.sh"
-CAM_RUN_CMD: "bg_DemoWithCamera.sh"
+CAM_TEST_RUN_CMD: "bg_DemoWithVideo_Inter.sh"
+CAM_RUN_CMD: "bg_DemoWithCamera_Inter.sh"
+  
+  # CAM_TEST_RUN_CMD: "bg_DemoWithVideo.sh"
+  # CAM_RUN_CMD: "bg_DemoWithCamera.sh"
+RT_SCHED_CMD: "RT_sched.sh"

@@ -6,6 +6,38 @@
 
 #include <unistd.h>
 #include <chrono>
+#include <mutex>
+#include <unordered_map>
+#include "JitterMeter.h"
+#include <list>
+
+const std::unordered_map<int, std::vector<std::string>> test_frame_numbers = {
+    { 153,  { "Monica", "Extra 1" } },
+    { 201,  { "Rachel", "Extra 1", "Unknown" } },
+    { 221,  { "Extra 2", "Extra 3" } },
+    { 339,  { "Phoebe", "Extra 1", "Unknown" } },
+    { 504,  { "Rachel", "Unknown" } },
+    { 700,  { "Rachel", "Unknown" } },
+    { 910,  { "Monica", "Phoebe", "Rachel" } },
+    { 1007, { "Rachel", "Ross" } },
+    { 1173, { "Monica", "Phoebe", "Unknown", "Unknown", "Unknown" } },
+    { 1279, { } },
+    { 1355, { "Extra 4", "Unknown" } },
+    { 1397, { "Extra 4", "Unknown" } },
+    { 1408, { "Monica" } },
+    { 1470, { "Rachel", "Ross", "Phoebe", "Chandler", "Joey" } },
+    { 1606, { "Rachel" } },
+    { 1687, { "Rachel", "Ross", "Phoebe", "Chandler", "Joey" } },
+    { 1711, { "Extra 5", "Unknown" } },
+    { 1878, { "Joey", "Chandler", "Phoebe" } },
+    { 1895, { "Joey", "Chandler", "Monica", "Phoebe" } },
+    { 1969, { "Rachel", "Ross" } },
+    { 2256, { "Monica" } },
+    { 2440, { "Rachel" } },
+    { 2747, { "Phoebe", "Rachel", "Monica" } },
+    { 2966, { "Rachel", "Monica" } },
+    { 3033, { "Joey" } }
+};
 
 int Hwnd_RetrainSequence(CRunModeDlg* pDlg) {
   DoRemoteCmd(pDlg->m_strCmdClearLgFaceRecDemo);
@@ -14,11 +46,32 @@ int Hwnd_RetrainSequence(CRunModeDlg* pDlg) {
   return 0;
 }
 
+/**
+ * @brief Real Time Scheduling을 적용한다
+ *
+ * @param pDlg[IN]
+ *
+ * @return 
+ */
+int Hwnd_Apply_RT_Sched() {
+printf("\033[1;31m[%s][%d] :x: Start RT \033[m\n",__FUNCTION__,__LINE__);
+
+  std::string strCmd =std::string("./")+g_Config["RT_SCHED_CMD"].as<std::string>();
+  //DoRemoteCmd(g_Config["RT_SCHED_CMD"].as<std::string>());
+  DoRemoteCmd(strCmd);
+  return 0;
+}
 
 CRunModeDlg::CRunModeDlg(int iMode,QWidget *parent)
 {
   //QMessageBox::information(this,"Now Start",
   //    "Confirm",QMessageBox::Yes);
+
+  // 지터 통계 초기화
+  m_ldAvgJitter_ms = 0 ;
+  m_iJitterCount = 0;
+  m_vecJitter_ms.clear();
+  std::vector<long double>().swap(m_vecJitter_ms);
 
   printf("\033[1;36m[%s][%d] :x: mode %d \033[m\n",
       __FUNCTION__,__LINE__,iMode);
@@ -98,6 +151,35 @@ CRunModeDlg::~CRunModeDlg(){
  */
 void CRunModeDlg::handleShutter() {
   m_bShutter = true;
+
+  int iCnt = 0; 
+
+  while (!m_bShutter) {
+    usleep(100000);
+    iCnt++;
+    printf("\033[1;33m[%s][%d] :x: Wait capture [%d]\033[m\n",
+        __FUNCTION__,__LINE__,iCnt);
+  }
+  // :x: Leaning 모드일 경우 촬영된 샘플의 개수를 카운트해서 정해진 샘플을
+  // :x: 모두 촬영하면 nano에 사진을 전송하고 종료하는 시퀀스를 수행한다
+  if (GetMode() == MODE_LEARNING) {
+    m_iCntofSample++;
+    std::string strMsgMain = std::string("Sample to capture ") +
+      std::to_string(m_iNumberOfSample);
+    std::string strMsgInfo = std::string("Now ") +
+      std::to_string(m_iCntofSample) +" picture(s) captured";
+    QMessageBox::information(this,strMsgMain.c_str(),
+        strMsgInfo.c_str(),QMessageBox::Yes);
+
+    if ( m_iCntofSample == m_iNumberOfSample ) {
+      QMessageBox::information(this,"Notice",
+          "All Pictures are captured."
+          "The pictures will be applied to the system.",QMessageBox::Yes);
+      // :x: 정한 숫자만큼 샘플을 얻었으면 전송 시퀀스를 수행한다
+      RetrainSequence(m_strIOI,m_vecCapturedFiles);
+      handleBtnExit();
+    }
+  }
 }
 
 
@@ -107,7 +189,8 @@ void CRunModeDlg::handleShutter() {
  */
 void CRunModeDlg::handleConnect(){
   printf("\033[1;33m[%s][%d] :x: Btn Event \033[m\n",__FUNCTION__,__LINE__);
-  m_pThrVideo = new std::thread(&CRunModeDlg::LoopVideo, this);
+  //m_pThrVideo = new std::thread(&CRunModeDlg::LoopVideo, this);
+  m_pThrVideo = new std::thread(&CRunModeDlg::LoopVideoWithJson, this);
 }
 
 void CRunModeDlg::handleBtnExit(){
@@ -250,6 +333,286 @@ void CRunModeDlg::LoopVideo() {
 }
 
 /**
+ * @brief nano 접속을 수행하고 접속후 들어오는 영상을
+ *        갱신하여 화면에 출력하는 루프를 구동한다
+ */
+void CRunModeDlg::LoopVideoWithJson() {
+  TTcpConnectedPort *TcpConnectedPort=NULL;
+  TTcpConnectedPort *TcpConnectedPort2=NULL;
+  // :x: 접속IP는 config/Remote_UI_config.yaml 파일을 참조
+  std::string strIP = g_Config["CAM_IP"].as<std::string>();
+  std::string strPortImage = g_Config["CAM_PORT_IMAGE"].as<std::string>();
+  std::string strPortJson = g_Config["CAM_PORT_JSON"].as<std::string>();
+
+  printf("\033[1;33m[%s][%d] :x: Start Connecting [%s][%s]\033[m\n",
+      __FUNCTION__,__LINE__,strIP.c_str(),strPortImage.c_str());
+
+  int iRetryNumber = 8;
+  int iRetryCount = 0;
+//  bool bRetvalue;
+  std::mutex g_ListLock;
+  std::list<cv::Mat> g_ImageList;
+  std::list<std::vector<DetectionInfo>> g_InfoList;
+
+  // :x: nano 접속을 수행하고 실패하면 재시도를 수행한다
+  for (int i =0 ; i < iRetryNumber ; i++ )
+  {
+    iRetryCount++;
+    if ((TcpConnectedPort=OpenTcpConnection(
+            strIP.c_str(),strPortImage.c_str()))==NULL)
+    {
+      printf("\033[1;31m[%s][%d] :x: Connection Err Retry count %d,"
+             "wait 3 seconds then Retry \033[m\n",
+          __FUNCTION__,__LINE__,i);
+      sleep(3);
+    }
+    else {
+      printf("\033[1;33m[%s][%d] :x: Connection Success \033[m\n",
+          __FUNCTION__,__LINE__);
+      break;
+    }
+  }
+  if (iRetryCount == iRetryNumber) {
+    printf("\033[1;31m[%s][%d] :x: Connection Failed check the server \033[m\n",
+        __FUNCTION__,__LINE__);
+    return;
+  }
+
+  // :x: 접속이 성공하면, Realtime Scheduling으로 전환하는 스크립트를 실행한다
+  std::thread thrRtSched(Hwnd_Apply_RT_Sched);
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  iRetryCount = 0;
+  for (int i =0 ; i < iRetryNumber ; i++ )
+  {
+    iRetryCount++;
+    if ((TcpConnectedPort2 = OpenTcpConnection(strIP.c_str(), strPortJson.c_str())) == NULL)
+    {
+      printf("\033[1;31m[%s][%d] :x: Fail to Connect [%s][%s]\033[m\n",
+          __FUNCTION__,__LINE__,strIP.c_str(),strPortJson.c_str());
+      sleep(1);
+    } else {
+      printf("\033[1;33m[%s][%d] :x: Connection Success \033[m\n",
+          __FUNCTION__,__LINE__);
+      break;
+    }
+  }
+  if (iRetryCount == iRetryNumber) {
+    printf("\033[1;31m[%s][%d] :x: Connection Failed check the json server \033[m\n",
+        __FUNCTION__,__LINE__);
+    return;
+  }
+
+  std::thread thrImageReader([&](TTcpConnectedPort* TcpConnectedPort) {
+        int frameCount = 0;
+        bool retvalue;
+        Mat Image;
+
+        do {
+            retvalue = TcpRecvImageAsJpeg(TcpConnectedPort, &Image);
+            if (!retvalue) {
+                break;
+            }
+            frameCount++;
+            //std::cout << "runnerRecvImage frameCount:" << frameCount << std::endl;
+
+            g_ListLock.lock();
+            g_ImageList.push_back(Image);
+            g_ListLock.unlock();
+        } while (1); // loop until user hits quit
+    }, TcpConnectedPort);
+
+  std::thread thrJsonReader([&](TTcpConnectedPort* TcpConnectedPort) {
+        std::vector<DetectionInfo> result;
+
+        do {
+            result.clear();
+            if (TcpRecvDetectionInfo(TcpConnectedPort, result)) {
+                g_ListLock.lock();
+                g_InfoList.push_back(result);
+                g_ListLock.unlock();
+                // parse json data from decrypted_buff
+            }
+            else
+            {
+                printf("fail to read2:\n");
+                break;
+            }
+        } while (1); // loop until user hits quit
+
+    }, TcpConnectedPort2);
+
+  // :x: connect 되면 이미지 data chunk를 받고 화면에 표시한다
+  static int cnt = 0;
+  Mat Image;
+  Mat Image2;
+  std::vector<DetectionInfo> infoList;
+  std::chrono::system_clock::time_point begin_time;
+  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+  double avrageFps = 0.0;
+
+  unsigned int exact_found_count = 0;
+  unsigned int total_expected_count = 0;
+
+  while (1) {
+    g_ListLock.lock();
+    if (g_ImageList.size() > 0 && g_InfoList.size() > 0) {
+        Image = g_ImageList.front();
+        g_ImageList.pop_front();
+        infoList = g_InfoList.front();
+        g_InfoList.pop_front();
+        g_ListLock.unlock();
+
+        if (GetMode() == MODE_TESTRUN) {
+          cv::cvtColor(Image,Image2,COLOR_BGR2RGB);
+        } else {
+          Image2 = Image;
+        }
+
+        if (GetMode() != MODE_LEARNING) {
+            for (size_t i = 0; i < infoList.size(); ++i) {
+                DetectionInfo& info = infoList[i];
+
+                cv::Rect rect(info.x, info.y, info.w, info.h);
+                cv::Scalar bbox_color(0, 255, 0, 255);
+                // get label
+                if (info.category == 1) {
+                }
+                else {
+                    bbox_color = cv::Scalar(0, 0, 255, 255);
+                }
+                // draw bounding boxes around the face
+                cv::rectangle(Image2, rect, bbox_color, 2, 8, 0);
+
+                // print label to the bounding box
+                //cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
+                //    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 255, 255, 255), 3); // mat, text, coord, font, scale, bgr color, line thickness
+                //cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
+                //    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
+                cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
+                        cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, bbox_color, 2); // mat, text, coord, font, scale, bgr color, line thickness
+            }
+        }
+
+        cnt++;
+        if (cnt == 1) {
+          begin_time = std::chrono::system_clock::now();
+        }
+        now = std::chrono::system_clock::now();
+        auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now - begin_time);
+        if (milliseconds.count() > 0) {
+            avrageFps = cnt * 1000.0 / milliseconds.count();
+        }
+        else {
+            avrageFps = 10.0;
+        }
+
+        auto iter = test_frame_numbers.find(cnt);
+        if (iter != test_frame_numbers.end()) {
+            std::vector<DetectionInfo> infoList2 = infoList;
+            const std::vector<std::string> &required_names = iter->second;
+            for (size_t j = 0; j < required_names.size(); ++j) {
+                const std::string &req_name = required_names[j];
+
+                total_expected_count++;
+
+                auto iter = std::find_if(infoList2.begin(), infoList2.end(), [&](DetectionInfo &info)
+                    {
+                        return (info.label == req_name);
+                    });
+                if (iter != infoList2.end()) {
+                    exact_found_count++;
+                    infoList2.erase(iter);
+                }
+            }
+            /*
+            for (size_t i = 0; i < infoList.size(); ++i) {
+                DetectionInfo &info = infoList[i];
+
+                auto iter = std::find_if(required_names.begin(), required_names.end(), [&](const std::string &name)
+                    {
+                        return (name == info.label);
+                    });
+                if (iter != required_names.end()) {
+                }
+            }
+            */
+        }
+
+        char str[256];
+        if (GetMode() == MODE_CAM) {
+            sprintf(str, "Frame %d  FPS %.1lf  Accuracy %lu", cnt, avrageFps, infoList.size());
+        } else if (GetMode() == MODE_TESTRUN) {
+            if (total_expected_count > 0) {
+                sprintf(str, "Frame %d  FPS %.1lf  Accuracy %d %% (%d/%d)",
+                        cnt, avrageFps, ((100 * exact_found_count) / total_expected_count), exact_found_count, total_expected_count);
+            } else {
+                sprintf(str, "Frame %d  FPS %.1lf  Accuracy - %% (%d/%d)",
+                        cnt, avrageFps, exact_found_count, total_expected_count);
+            }
+        } else {
+            str[0] = 0;
+        }
+
+        cv::putText(Image2, str, cv::Point(0, 20),
+            cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 255, 255, 255), 3);
+        cv::putText(Image2, str, cv::Point(0, 20),
+            cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
+
+        // :x: Learning 모드일 경우 Jitter 표시하지 않는다 
+        // :x: 촬영에 불필요 영상 출력 금지를 위해
+        if (GetMode() != MODE_LEARNING) {
+          // :x: Display Jitter Data
+          DisplayJitterInfo(Image2);
+        }
+       
+        auto img =
+          QImage((const unsigned char*) Image2.data,Image2.cols,Image2.rows,
+              Image2.step,QImage::Format_RGB888);
+
+        //printf("\033[1;36m[%s][%d] :x: draw a image =%d \033[m\n",
+        //    __FUNCTION__,__LINE__, cnt);
+
+        m_pLabel00->setPixmap(QPixmap::fromImage(img));
+
+        // :x: shutter는 화면 촬영에 대한 flag
+        if (m_bShutter == true) {
+          // :x: 화면 촬영 버튼이 눌렸을 때에 대한 처리
+          printf("\033[1;33m[%s][%d] :x: Take Picture \033[m\n",
+              __FUNCTION__,__LINE__);
+
+          cv::cvtColor(Image,Image2,COLOR_BGR2RGB);
+          cnt++;
+          std::string strFileName;
+          // :x: IOI 명과 epoch time tick을 사용해 유니크한 저장 파일명을 만든다
+          GetUniqueFileName(strFileName, m_strIOI);
+          printf("\033[1;36m[%s][%d] :x: chk filename =%s \033[m\n",
+              __FUNCTION__,__LINE__,strFileName.c_str());
+
+          // :x: JPEG 파일로 저장한다
+          imwrite(strFileName,Image2);
+
+          // :x: 저장된 파일명은 벡터에 기록해둔다
+          m_vecCapturedFiles.push_back(strFileName);
+
+          m_bShutter = false;
+
+        }
+    } else {
+        g_ListLock.unlock();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+  }
+  printf("\033[1;36m[%s][%d] :x: End \033[m\n",__FUNCTION__,__LINE__);
+
+  CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
+  thrRtSched.join();
+  handleBtnExit();
+}
+
+/**
  * @brief Learning모드에서 촬영한 사진을 전송하는 시퀀스를 수행한다
  *
  * @param strIOI_Name[IN] IOI 이름
@@ -305,7 +668,7 @@ int CRunModeDlg::RetrainSequence(std::string strIOI_Name,
   DoShellCmd(strCmdCopyFiletoIOIdir);
 
   QMessageBox::information(this,"Notice",
-      "Files Dispatched done, now retrain Start",QMessageBox::Yes);
+      "File dispatched done",QMessageBox::Yes);
 #if 0 // :x: retrain sequence는 제거한다, scan mode에서 처리
   Hwnd_RetrainSequence(this);
 
@@ -340,3 +703,61 @@ void CRunModeDlg::Create_commands() {
 
 }
 
+/**
+ * @brief Display Jitter Info on cv Matrix
+ *
+ * @param Image[OUT]
+ */
+void CRunModeDlg::DisplayJitterInfo(cv::Mat& Image) {
+  char pJitterData[256]={};
+  long double ldJitterTime_ms;
+  cv::Point DisplayPosition = {0, 40};
+  GetCurrentJitter(ldJitterTime_ms);
+  m_vecJitter_ms.push_back(ldJitterTime_ms);
+  // 평균 지터 계산
+  m_ldAvgJitter_ms = std::accumulate(m_vecJitter_ms.begin(),m_vecJitter_ms.end(),0.0)/m_vecJitter_ms.size();
+
+  sprintf(pJitterData,"Jitter %6.1Lf msec AVG(%6.1Lf msec)",
+      ldJitterTime_ms,m_ldAvgJitter_ms);
+  cv::putText(Image, pJitterData, DisplayPosition,
+      cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 0, 255, 255), 3);
+  cv::putText(Image, pJitterData, DisplayPosition,
+      cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
+
+  // Draw Histogram
+  static std::list<int> listHistogram = {0,0,0,0,0,0,0,0,0,0};
+
+  listHistogram.pop_front();
+
+  int iMaxBarHeight = 80;  // Histogram bars' max height
+  int iBasePosY = DisplayPosition.y + iMaxBarHeight+3;
+  int iLineWidth =1;
+  cv::Scalar Color_Boundary(255,255,255,255);
+  cv::Scalar Color;
+  cv::Scalar ChartColor_Normal (  0, 255,   0, 255);
+  cv::Scalar ChartColor_Warning(255, 255,   0, 255);
+  cv::Scalar ChartColor_Err    (255,   0,   0, 255);
+
+  float fSize = 0; 
+  if (ldJitterTime_ms < 100 ) {
+    Color = ChartColor_Normal;
+    fSize = (float)iMaxBarHeight*(ldJitterTime_ms/100.0);
+  } else if ( ldJitterTime_ms >= 100 && ldJitterTime_ms < 200 ) {
+    Color = ChartColor_Warning;
+    fSize = (float)iMaxBarHeight*(ldJitterTime_ms/200.0);
+  } else if ( ldJitterTime_ms >= 200 ) {
+    Color = ChartColor_Err;
+    fSize = (float)iMaxBarHeight*(ldJitterTime_ms/500.0);
+  }
+  listHistogram.push_back((int)fSize);
+
+  // :x: 가장 최근 10개의 box를 만든다
+  int iCnt = 0 ;
+  for (int iVal : listHistogram) {
+    cv::Rect rect(0+(20*iCnt), iBasePosY-iVal, 20, iVal);
+    cv::rectangle(Image, rect, Color, FILLED, LINE_8, 0);
+    cv::rectangle(Image, rect, Color_Boundary, iLineWidth, LINE_8, 0);
+    iCnt++;
+  }
+
+}

@@ -3,10 +3,15 @@
 #include <QDesktopWidget>
 #include <yaml-cpp/yaml.h>
 #include <string>
+#include "JitterMeter.h"
 // :x: Global Config of this program
 YAML::Node g_Config= YAML::LoadFile("config/Remote_UI_config.yaml");
 
+
+
 int main(int argc, char *argv[]) {
+  int ret;
+
 printf("\033[1;36m[%s][%d] :x: chk %s\033[m\n",__FUNCTION__,__LINE__,
     g_Config["CAM_IP"].as<std::string>().c_str());
 
@@ -27,5 +32,10 @@ printf("\033[1;36m[%s][%d] :x: chk %s\033[m\n",__FUNCTION__,__LINE__,
   mainDialog.resize(winSize);
   mainDialog.showNormal();
 
-  return app.exec();
+  // :x: jitter 측정 routine 구동
+  StartUpdateJitter(g_Config["CAM_IP"].as<std::string>());
+
+  ret = app.exec();
+  StopUpdateJitter();
+  return ret;
 }

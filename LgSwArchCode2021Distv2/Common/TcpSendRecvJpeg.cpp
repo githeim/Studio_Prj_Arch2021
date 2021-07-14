@@ -13,6 +13,8 @@
 #include <openssl/buffer.h>
 #include <openssl/conf.h>
 #include <openssl/err.h>
+#include <json/json.h>
+
 #include "TcpSendRecvJpeg.h"
 static  int init_values[2] = { cv::IMWRITE_JPEG_QUALITY,80 }; //default(95) 0-100
 static  std::vector<int> param (&init_values[0], &init_values[0]+2);
@@ -211,6 +213,93 @@ bool TcpRecvImageAsJpeg(TTcpConnectedPort * TcpConnectedPort,cv::Mat *Image)
 //-----------------------------------------------------------------
 // END TcpRecvImageAsJpeg
 //-----------------------------------------------------------------
+
+
+int stringToInt(const char* value) {
+    if (!value)
+        return 0;
+    size_t start = 0;
+    if (value[0] == '"')
+        start = 1;
+
+    return strtol(&value[start], NULL, 10);
+}
+
+void parseJsonValues(const std::string& data, std::vector<DetectionInfo>& result)
+{
+    Json::Value value;
+    std::istringstream data_stream(data);
+    int count;
+
+    data_stream >> value;
+
+    count = stringToInt(value["dts"].asCString());
+
+    for (int i = 0; i < count; ++i) {
+        std::string key = std::to_string(i);
+        DetectionInfo info;
+        info.x = stringToInt(value[key]["roi"]["x"].asCString());
+        info.y = stringToInt(value[key]["roi"]["y"].asCString());
+        info.w = stringToInt(value[key]["roi"]["w"].asCString());
+        info.h = stringToInt(value[key]["roi"]["h"].asCString());
+        info.category = stringToInt(value[key]["category"].asCString());
+        info.label = value[key]["label"].asString();
+
+        result.push_back(info);
+    }
+
+}
+
+bool TcpRecvDetectionInfo(TTcpConnectedPort* TcpConnectedPort, std::vector<DetectionInfo> &result)
+{
+    unsigned char* buff;	/* receive buffer */
+#ifdef ENCRYPT_DATA
+    unsigned char* decrypted_buff;	/* decrypted buffer */
+#endif // ENCRYPT_DATA
+    unsigned int datasize;
+
+    if (ReadDataTcp(TcpConnectedPort, (unsigned char*)&datasize, sizeof(datasize)) != sizeof(datasize))
+    {
+        printf("fail to read2:\n");
+        return false;
+    }
+
+    datasize = ntohl(datasize); // convert image size to host format
+    buff = new (std::nothrow) unsigned char[datasize];
+#ifdef ENCRYPT_DATA
+    decrypted_buff = new (std::nothrow) unsigned char[datasize + 1];
+#endif
+
+    if ((ReadDataTcp(TcpConnectedPort, buff, datasize)) == datasize)
+    {
+#ifdef ENCRYPT_DATA
+        memset(decrypted_buff, 0, datasize + 1);
+        unsigned int decrypted_len = StrDecrypt(buff, datasize, decrypted_buff);
+        std::string jsonData((const char*)decrypted_buff, decrypted_len);
+        //printf("read detection data:%d\n", decrypted_len);
+        parseJsonValues(jsonData, result);
+#else
+        printf("read detection data:%d\n", datasize);
+        // parse json data from buff
+#endif
+
+        delete[] buff;
+#ifdef ENCRYPT_DATA
+        delete[] decrypted_buff;
+#endif // ENCRYPT_DATA
+        return true;
+    }
+    else
+    {
+        printf("fail to read2:\n");
+    }
+    delete[] buff;
+#ifdef ENCRYPT_DATA
+    delete[] decrypted_buff;
+#endif // ENCRYPT_DATA
+
+    return false;
+}
 //-----------------------------------------------------------------
 // END of File
 //-----------------------------------------------------------------
