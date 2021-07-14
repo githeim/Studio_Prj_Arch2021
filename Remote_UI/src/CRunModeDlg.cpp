@@ -151,6 +151,35 @@ CRunModeDlg::~CRunModeDlg(){
  */
 void CRunModeDlg::handleShutter() {
   m_bShutter = true;
+
+  int iCnt = 0; 
+
+  while (!m_bShutter) {
+    usleep(100000);
+    iCnt++;
+    printf("\033[1;33m[%s][%d] :x: Wait capture [%d]\033[m\n",
+        __FUNCTION__,__LINE__,iCnt);
+  }
+  // :x: Leaning 모드일 경우 촬영된 샘플의 개수를 카운트해서 정해진 샘플을
+  // :x: 모두 촬영하면 nano에 사진을 전송하고 종료하는 시퀀스를 수행한다
+  if (GetMode() == MODE_LEARNING) {
+    m_iCntofSample++;
+    std::string strMsgMain = std::string("Sample to capture ") +
+      std::to_string(m_iNumberOfSample);
+    std::string strMsgInfo = std::string("Now ") +
+      std::to_string(m_iCntofSample) +" picture(s) captured";
+    QMessageBox::information(this,strMsgMain.c_str(),
+        strMsgInfo.c_str(),QMessageBox::Yes);
+
+    if ( m_iCntofSample == m_iNumberOfSample ) {
+      QMessageBox::information(this,"Notice",
+          "All Pictures are captured."
+          "The pictures will be applied to the system.",QMessageBox::Yes);
+      // :x: 정한 숫자만큼 샘플을 얻었으면 전송 시퀀스를 수행한다
+      RetrainSequence(m_strIOI,m_vecCapturedFiles);
+      handleBtnExit();
+    }
+  }
 }
 
 
@@ -548,7 +577,6 @@ void CRunModeDlg::LoopVideoWithJson() {
         // :x: shutter는 화면 촬영에 대한 flag
         if (m_bShutter == true) {
           // :x: 화면 촬영 버튼이 눌렸을 때에 대한 처리
-          m_bShutter = false;
           printf("\033[1;33m[%s][%d] :x: Take Picture \033[m\n",
               __FUNCTION__,__LINE__);
 
@@ -566,25 +594,8 @@ void CRunModeDlg::LoopVideoWithJson() {
           // :x: 저장된 파일명은 벡터에 기록해둔다
           m_vecCapturedFiles.push_back(strFileName);
 
-          // :x: Leaning 모드일 경우 촬영된 샘플의 개수를 카운트해서 정해진 샘플을
-          // :x: 모두 촬영하면 nano에 사진을 전송하고 종료하는 시퀀스를 수행한다
-          if (GetMode() == MODE_LEARNING) {
-            m_iCntofSample++;
-            std::string strMsgMain = std::string("Sample to capture ") +
-              std::to_string(m_iNumberOfSample);
-            std::string strMsgInfo = std::string("Now ") +
-              std::to_string(m_iCntofSample) +" picture(s) captured";
-            QMessageBox::information(this,strMsgMain.c_str(),
-                strMsgInfo.c_str(),QMessageBox::Yes);
+          m_bShutter = false;
 
-            if ( m_iCntofSample == m_iNumberOfSample ) {
-              QMessageBox::information(this,"Notice",
-                  "All Pictures are captured. Now retrain sequence",QMessageBox::Yes);
-              // :x: 정한 숫자만큼 샘플을 얻었으면 전송 시퀀스를 수행한다
-              RetrainSequence(m_strIOI,m_vecCapturedFiles);
-              break;
-            }
-          }
         }
     } else {
         g_ListLock.unlock();
@@ -655,7 +666,7 @@ int CRunModeDlg::RetrainSequence(std::string strIOI_Name,
   DoShellCmd(strCmdCopyFiletoIOIdir);
 
   QMessageBox::information(this,"Notice",
-      "Files Dispatched done, now retrain Start",QMessageBox::Yes);
+      "File dispatched done",QMessageBox::Yes);
 #if 0 // :x: retrain sequence는 제거한다, scan mode에서 처리
   Hwnd_RetrainSequence(this);
 
