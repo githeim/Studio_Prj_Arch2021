@@ -444,7 +444,7 @@ void CRunModeDlg::LoopVideoWithJson() {
     }, TcpConnectedPort2);
 
   // :x: connect 되면 이미지 data chunk를 받고 화면에 표시한다
-  static int cnt = 0;
+  int cnt = 0;
   Mat Image;
   Mat Image2;
   std::vector<DetectionInfo> infoList;
