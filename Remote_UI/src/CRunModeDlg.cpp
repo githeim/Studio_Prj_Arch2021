@@ -458,8 +458,11 @@ void CRunModeDlg::LoopVideoWithJson() {
   float fFrame_time_interval_delta_ms ;
   double avrageFps = 0.0;
 
-  unsigned int exact_found_count = 0;
-  unsigned int total_expected_count = 0;
+  size_t identified_found_count = 0;
+  size_t identified_expected_count = 0;
+
+  size_t recognized_found_count = 0;
+  size_t recognized_expected_count = 0;
 
   while (1) {
     g_ListLock.lock();
@@ -531,17 +534,21 @@ void CRunModeDlg::LoopVideoWithJson() {
         if (iter != test_frame_numbers.end()) {
             std::vector<DetectionInfo> infoList2 = infoList;
             const std::vector<std::string> &required_names = iter->second;
+
+            identified_found_count += infoList.size();
+            identified_expected_count += required_names.size();
+
             for (size_t j = 0; j < required_names.size(); ++j) {
                 const std::string &req_name = required_names[j];
 
-                total_expected_count++;
+                recognized_expected_count++;
 
                 auto iter = std::find_if(infoList2.begin(), infoList2.end(), [&](DetectionInfo &info)
                     {
                         return (info.label == req_name);
                     });
                 if (iter != infoList2.end()) {
-                    exact_found_count++;
+                    recognized_found_count++;
                     infoList2.erase(iter);
                 }
             }
@@ -561,14 +568,18 @@ void CRunModeDlg::LoopVideoWithJson() {
 
         char str[256];
         if (GetMode() == MODE_CAM) {
-            sprintf(str, "Frame %d  FPS %.1lf  Accuracy %lu", cnt, avrageFps, infoList.size());
+            sprintf(str, "Frame %d  FPS %.1lf  Identified %lu", cnt, avrageFps, infoList.size());
         } else if (GetMode() == MODE_TESTRUN) {
-            if (total_expected_count > 0) {
-                sprintf(str, "Frame %d  FPS %.1lf  Accuracy %d %% (%d/%d)",
-                        cnt, avrageFps, ((100 * exact_found_count) / total_expected_count), exact_found_count, total_expected_count);
+            if (recognized_expected_count > 0) {
+                sprintf(str, "Frame %d  FPS %.1lf  Identified %lu/%lu  Recognized %lu %% (%lu/%lu)",
+                        cnt, avrageFps,
+                        identified_found_count, identified_expected_count,
+                        ((100 * recognized_found_count) / recognized_expected_count), recognized_found_count, recognized_expected_count);
             } else {
-                sprintf(str, "Frame %d  FPS %.1lf  Accuracy - %% (%d/%d)",
-                        cnt, avrageFps, exact_found_count, total_expected_count);
+                sprintf(str, "Frame %d  FPS %.1lf  Identified %lu/%lu  Recognized - %% (%lu/%lu)",
+                        cnt, avrageFps,
+                        identified_found_count, identified_expected_count,
+                        recognized_found_count, recognized_expected_count);
             }
         } else {
             str[0] = 0;
