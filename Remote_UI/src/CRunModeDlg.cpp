@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include "JitterMeter.h"
 #include <list>
+#include <cmath>
 
 const std::unordered_map<int, std::vector<std::string>> test_frame_numbers = {
     { 153,  { "Monica", "Extra 1" } },
@@ -449,7 +450,12 @@ void CRunModeDlg::LoopVideoWithJson() {
   Mat Image2;
   std::vector<DetectionInfo> infoList;
   std::chrono::system_clock::time_point begin_time;
+  std::chrono::system_clock::time_point previous_time = std::chrono::system_clock::now();
   std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
+  float fCurrent_frame_time_interval_ms  ;
+  float fPrevious_frame_time_interval_ms ;
+  float fFrame_time_interval_delta_ms ;
   double avrageFps = 0.0;
 
   unsigned int exact_found_count = 0;
@@ -500,6 +506,19 @@ void CRunModeDlg::LoopVideoWithJson() {
           begin_time = std::chrono::system_clock::now();
         }
         now = std::chrono::system_clock::now();
+        // Get Jitter --------------------------
+        fCurrent_frame_time_interval_ms = 
+          std::chrono::duration_cast<std::chrono::milliseconds>(now - previous_time).count();
+        fFrame_time_interval_delta_ms = std::abs(
+          fCurrent_frame_time_interval_ms - fPrevious_frame_time_interval_ms);
+        printf("\033[1;33m[%s][%d] :x: Time Interval %f ms \033[m\n",
+            __FUNCTION__,__LINE__,fCurrent_frame_time_interval_ms);
+        printf("\033[1;32m[%s][%d] :x: Time Interval Delta %f ms \033[m\n",
+            __FUNCTION__,__LINE__,fFrame_time_interval_delta_ms);
+        fPrevious_frame_time_interval_ms = fCurrent_frame_time_interval_ms;
+        previous_time = now; 
+        // ------------------------------------
+
         auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now - begin_time);
         if (milliseconds.count() > 0) {
             avrageFps = cnt * 1000.0 / milliseconds.count();
@@ -564,7 +583,7 @@ void CRunModeDlg::LoopVideoWithJson() {
         // :x: 촬영에 불필요 영상 출력 금지를 위해
         if (GetMode() != MODE_LEARNING) {
           // :x: Display Jitter Data
-          DisplayJitterInfo(Image2);
+          DisplayJitterInfo(Image2,fFrame_time_interval_delta_ms);
         }
        
         auto img =
@@ -708,11 +727,10 @@ void CRunModeDlg::Create_commands() {
  *
  * @param Image[OUT]
  */
-void CRunModeDlg::DisplayJitterInfo(cv::Mat& Image) {
+void CRunModeDlg::DisplayJitterInfo(cv::Mat& Image,float fJitter_Delta_ms) {
   char pJitterData[256]={};
-  long double ldJitterTime_ms;
+  long double ldJitterTime_ms = fJitter_Delta_ms;
   cv::Point DisplayPosition = {0, 40};
-  GetCurrentJitter(ldJitterTime_ms);
   m_vecJitter_ms.push_back(ldJitterTime_ms);
   // 평균 지터 계산
   m_ldAvgJitter_ms = std::accumulate(m_vecJitter_ms.begin(),m_vecJitter_ms.end(),0.0)/m_vecJitter_ms.size();
@@ -739,15 +757,19 @@ void CRunModeDlg::DisplayJitterInfo(cv::Mat& Image) {
   cv::Scalar ChartColor_Err    (255,   0,   0, 255);
 
   float fSize = 0; 
-  if (ldJitterTime_ms < 100 ) {
+  if (ldJitterTime_ms < 200 ) {
     Color = ChartColor_Normal;
-    fSize = (float)iMaxBarHeight*(ldJitterTime_ms/100.0);
-  } else if ( ldJitterTime_ms >= 100 && ldJitterTime_ms < 200 ) {
-    Color = ChartColor_Warning;
     fSize = (float)iMaxBarHeight*(ldJitterTime_ms/200.0);
-  } else if ( ldJitterTime_ms >= 200 ) {
+  } else if ( ldJitterTime_ms >= 200 && ldJitterTime_ms < 400 ) {
+    Color = ChartColor_Warning;
+    fSize = (float)iMaxBarHeight*(ldJitterTime_ms/400.0);
+  } else if ( ldJitterTime_ms >= 400 && ldJitterTime_ms < 600) {
     Color = ChartColor_Err;
-    fSize = (float)iMaxBarHeight*(ldJitterTime_ms/500.0);
+    fSize = (float)iMaxBarHeight*(ldJitterTime_ms/600.0);
+  }
+  else if (ldJitterTime_ms > 600) {
+    Color = ChartColor_Err;
+    fSize = (float)iMaxBarHeight;
   }
   listHistogram.push_back((int)fSize);
 

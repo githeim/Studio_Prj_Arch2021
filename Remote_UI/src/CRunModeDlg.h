@@ -65,7 +65,7 @@ public:
   // :x: clean up exist process
   std::string  m_strCmdClearLgFaceRecDemo;
 
-  void DisplayJitterInfo(cv::Mat& Image);
+  void DisplayJitterInfo(cv::Mat& Image,float fJitter_Delta_ms);
   long double m_ldAvgJitter_ms;
   std::vector<long double> m_vecJitter_ms;
   int m_iJitterCount;
