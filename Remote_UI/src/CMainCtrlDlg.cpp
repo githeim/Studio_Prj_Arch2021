@@ -32,7 +32,8 @@ int Hwnd_RetrainSequence(CMainCtrlDlg* pDlg) {
 
 std::thread *g_pThrDataAddSequence = nullptr;
 int Hwnd_DataAddSequence(CMainCtrlDlg* pDlg, std::string strIOI_Name,
-    std::string strFileNameToSend) {
+    std::vector<std::string> vecFileNamesToSend) {
+
 
   // :x: the command that creates the IOI directory
   std::string strCmdCreate_IOI_dir = 
@@ -46,6 +47,11 @@ int Hwnd_DataAddSequence(CMainCtrlDlg* pDlg, std::string strIOI_Name,
   printf("\033[1;36m[%s][%d] :x: chk %s \033[m\n",
       __FUNCTION__,__LINE__,strCmdCreate_IOI_dir.c_str());
 
+  std::string strFileNameToSend;
+  for (auto strFile : vecFileNamesToSend) {
+    strFileNameToSend = strFileNameToSend +
+      std::string(" ") + strFile + std::string(" ");
+  }
   // :x: the command that copy the file to remote IOI directory
   std::string strCmdCopyFiletoIOIdir = 
     std::string("sshpass -p")+
@@ -77,8 +83,6 @@ int Hwnd_DataAddSequence(CMainCtrlDlg* pDlg, std::string strIOI_Name,
   pDlg->SetTxt("Send the data set Done\n");
   return 0;
 }
-
-
 
 
 int CmdThread(CMainCtrlDlg* pDlg, std::vector<std::string> vecCmdList) {
@@ -323,9 +327,24 @@ void CMainCtrlDlg::handleAddData(){
   // get file path
   char szDefaultPath[512] ={};
   getcwd(szDefaultPath,sizeof(szDefaultPath));
-  QString fileName = QFileDialog::getOpenFileName(this,
+  QFileDialog DlgSelectFiles(this);
+  DlgSelectFiles.setFileMode(QFileDialog::ExistingFiles);
+  QStringList fileNames = QFileDialog::getOpenFileNames(this,
       tr("Open Image"), szDefaultPath, tr("Image Files (*.png *.jpg *.bmp)"));
-  std::string strFileName = fileName.toStdString();
+
+  std::string strFileName;
+  std::vector<std::string> vecFileNames;
+  for (auto file : fileNames) {
+    vecFileNames.push_back(file.toStdString());
+    strFileName = file.toStdString();
+    printf("\033[1;33m[%s][%d] :x: SelectFile [%s] \033[m\n",__FUNCTION__,__LINE__,strFileName.c_str());
+  }
+  
+  if ( vecFileNames.size() == 0 ) {
+    printf("\033[1;31m[%s][%d] :x: No files selected \033[m\n",
+        __FUNCTION__,__LINE__);
+    return;
+  }
   if (!strFileName.empty()) {
     printf("\033[1;32m[%s][%d] :x: The File Name is [%s] \033[m\n",
         __FUNCTION__,__LINE__, strFileName.c_str());
@@ -336,7 +355,7 @@ void CMainCtrlDlg::handleAddData(){
     return;
 
   }
-
+  
   if (g_pThrDataAddSequence) {
     g_pThrDataAddSequence->join();
     delete g_pThrDataAddSequence;
@@ -344,7 +363,8 @@ void CMainCtrlDlg::handleAddData(){
   }
 
   g_pThrDataAddSequence = 
-    new std::thread(Hwnd_DataAddSequence,this,strIOI,strFileName);
+    new std::thread(Hwnd_DataAddSequence,this,strIOI,vecFileNames);
+    
 }
 void CMainCtrlDlg::handleBtnExit(){
   printf("\033[1;33m[%s][%d] :x: Btn Event \033[m\n",__FUNCTION__,__LINE__);
