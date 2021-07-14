@@ -263,10 +263,9 @@ int Send_SinglePing(int ping_sockfd, struct sockaddr_in *ping_addr,
 		printf("\nSetting socket options to TTL failed!\n");
 		return -1;
 	}
-
 	else
 	{
-		printf("\nSocket set to TTL..\n");
+//		printf("\nSocket set to TTL..\n");
 	}
 
 	// setting timeout of recv setting
@@ -335,11 +334,11 @@ int Send_SinglePing(int ping_sockfd, struct sockaddr_in *ping_addr,
       }
       else
       {
-        printf("\033[1;32m%d bytes from %s (h: %s) (%s) msg_seq=%d ttl=%d"
-            " rtt = %Lf ms.\n \033[m",
-            PING_PKT_S, ping_dom, rev_host,
-            ping_ip, msg_count,
-            ttl_val, rtt_msec);
+//        printf("\033[1;32m%d bytes from %s (h: %s) (%s) msg_seq=%d ttl=%d"
+//            " rtt = %Lf ms.\n \033[m",
+//            PING_PKT_S, ping_dom, rev_host,
+//            ping_ip, msg_count,
+//            ttl_val, rtt_msec);
         msg_received_count++;
       }
     }
