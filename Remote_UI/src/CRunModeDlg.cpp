@@ -441,27 +441,29 @@ void CRunModeDlg::LoopVideoWithJson() {
           Image2 = Image;
         }
 
-        for (size_t i = 0; i < infoList.size(); ++i) {
-            DetectionInfo& info = infoList[i];
+        if (GetMode() != MODE_LEARNING) {
+            for (size_t i = 0; i < infoList.size(); ++i) {
+                DetectionInfo& info = infoList[i];
 
-            cv::Rect rect(info.x, info.y, info.w, info.h);
-            cv::Scalar bbox_color(0, 255, 0, 255);
-            // get label
-            if (info.category == 1) {
-            }
-            else {
-                bbox_color = cv::Scalar(0, 0, 255, 255);
-            }
-            // draw bounding boxes around the face
-            cv::rectangle(Image2, rect, bbox_color, 2, 8, 0);
+                cv::Rect rect(info.x, info.y, info.w, info.h);
+                cv::Scalar bbox_color(0, 255, 0, 255);
+                // get label
+                if (info.category == 1) {
+                }
+                else {
+                    bbox_color = cv::Scalar(0, 0, 255, 255);
+                }
+                // draw bounding boxes around the face
+                cv::rectangle(Image2, rect, bbox_color, 2, 8, 0);
 
-            // print label to the bounding box
-            //cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
-            //    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 255, 255, 255), 3); // mat, text, coord, font, scale, bgr color, line thickness
-            //cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
-            //    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
-            cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
-                    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, bbox_color, 2); // mat, text, coord, font, scale, bgr color, line thickness
+                // print label to the bounding box
+                //cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
+                //    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(255, 255, 255, 255), 3); // mat, text, coord, font, scale, bgr color, line thickness
+                //cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
+                //    cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0, 0, 0, 255), 1);
+                cv::putText(Image2, info.label, cv::Point(info.x, info.y + info.h + 20),
+                        cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, bbox_color, 2); // mat, text, coord, font, scale, bgr color, line thickness
+            }
         }
 
         cnt++;
